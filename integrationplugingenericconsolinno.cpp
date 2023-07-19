@@ -64,28 +64,78 @@ void IntegrationPluginGenericConsolinno::discoverThings(ThingDiscoveryInfo *info
 			//Debug out result[i]
 			std::cout << "result[" << i << "]:" << result[i] << std::endl;
 			//Call processDiscoveryObject with result[i] and info
-			//TODO: implemente processDiscoveryObject
-			// processDiscoveryObject(result[i], info);
+			processDiscoveryObject(result[i], info);
 		}
-
-
+		info->finish(Thing::ThingErrorNoError);
 	} catch (JsonRpcException &e) {
 		std::cerr << e.what() << std::endl;
+		info->finish(Thing::ThingErrorHardwareFailure);
 	}
+	
+}
 
-	//Debug out info variable
-	qCDebug(dcGenericConsolinno()) << "info->thingDescriptors().count():" << info->thingDescriptors().count();
-
+void IntegrationPluginGenericConsolinno::processDiscoveryObject(const Json::Value &responseObject, ThingDiscoveryInfo *info){
+	ThingDescriptor descriptor(inverterThingClassId, "Generic Consolinno Inverter", "Generic Consolinno Inverter");
+	ParamList params;
+	params << Param(inverterThingConnectionParamsParamTypeId, QVariant::fromValue((QString::fromStdString(responseObject.asString()))));
+	descriptor.setParams(params);
+	info->addThingDescriptor(descriptor);
 }
 
 void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 {
     Thing *thing = info->thing();
     qCDebug(dcGenericConsolinno()) << "Setup" << thing << thing->params();
+	m_timer = hardwareManager()->pluginTimerManager()->registerTimer(1);
 
-    if (thing->thingClassId() == inverterThingClassId) {
+    if (thing->thingClassId() == inverterThingClassId) {		
+
+		connect(m_timer, &PluginTimer::timeout, thing, [this, thing](){
+			QString connectionParams = thing->paramValue(inverterThingConnectionParamsParamTypeId).toString();
+			// qCDebug(dcGenericConsolinno()) << "connectionParams:" << connectionParams;
+			//Jsonrpc request to get currentData
+			HttpClient client(urlModbusRTU);
+			Client c(client);
+			Json::Value params;
+			params["connectionParams"] = connectionParams.toStdString();
+			params["block"] = -1;
+			try {
+				//Save c.CallMethod("discoverAllDevices", params); responce to json object
+				Json::Value result = c.CallMethod("getCurrentData", params);
+				//iterate on result assuming it is an array
+				for (Json::Value::ArrayIndex i = 0; i < result.size(); i++) {
+					//each element is a json object naming a modbus block
+					Json::Value block = result[i];
+					//iterate for key value pairs on block
+					for (auto const& key : block.getMemberNames()) {
+						//Debug out key and value
+						// std::cout << "key:" << key << " value:" << block[key] << std::endl;
+						if(key == "Interfaces::pvinverter::frequency"){
+							thing->setStateValue(inverterFrequencyStateTypeId, block[key].asFloat());
+						} else if(key == "Interfaces::pvinverter::totalEnergyProduced"){
+							thing->setStateValue(inverterTotalEnergyProducedStateTypeId, block[key].asFloat());
+						} else if(key == "Interfaces::pvinverter::pvVoltage1"){
+							thing->setStateValue(inverterPvVoltage1StateTypeId, block[key].asFloat());
+						} else if(key == "Interfaces::pvinverter::pvVoltage2"){//Interfaces::pvinverter::pvVoltage2
+							thing->setStateValue(inverterPvVoltage2StateTypeId, block[key].asFloat());
+						} else if(key == "Interfaces::pvinverter::voltagePhaseA"){//Interfaces::pvinverter::voltagePhaseA
+							thing->setStateValue(inverterVoltagePhaseAStateTypeId, block[key].asFloat());
+						} else if(key == "Interfaces::pvinverter::voltagePhaseB"){//Interfaces::pvinverter::voltagePhaseB
+							thing->setStateValue(inverterVoltagePhaseBStateTypeId, block[key].asFloat());
+						} else if(key == "Interfaces::pvinverter::voltagePhaseC"){//Interfaces::pvinverter::voltagePhaseC
+							thing->setStateValue(inverterVoltagePhaseCStateTypeId, block[key].asFloat());
+						}
+					}				
+				}
+
+				thing->setStateValue(inverterConnectedStateTypeId, true);				
+			} catch (JsonRpcException &e) {
+				// std::cerr << e.what() << std::endl;
+				thing->setStateValue(inverterConnectedStateTypeId, false);
+			}
+		});
+		info->finish(Thing::ThingErrorNoError);    
         
-        info->finish(Thing::ThingErrorNoError);
     } else if (thing->thingClassId() == meterThingClassId) {
         // Nothing to do here, we get all information from the inverter connection
         info->finish(Thing::ThingErrorNoError);
