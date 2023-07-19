@@ -1,0 +1,9 @@
+.qmake.stash
+build*/
+.vscode/
+*.o
+*.so
+moc_*
+plugininfo.h
+
+debian/source/
