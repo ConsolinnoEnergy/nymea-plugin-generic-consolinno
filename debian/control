@@ -15,5 +15,6 @@ Multi-Arch: same
 Section: libs
 Depends: ${shlibs:Depends},
          ${misc:Depends},
+         libjsonrpccpp-client0
 Description: nymea.io plugin for generic consolinno inverters
  This package will install the nymea.io plugin for generic consolinno inverters.

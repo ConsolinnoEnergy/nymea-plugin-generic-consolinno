@@ -10,11 +10,11 @@
             "thingClasses": [
                 {
                     "id": "79132b53-c55e-4a92-b0af-11bccb33bebb",
-                    "name": "inverter",
+                    "name": "genericConsolinnoConnection",
                     "displayName": "Generic Consolinno Inverter",
                     "createMethods": ["discovery", "user"],
-                    "interfaces": [ "solarinverter", "connectable" ],
-                    "providedInterfaces": [ "energymeter", "energystorage"],
+                    "interfaces": ["gateway"],
+                    "providedInterfaces": [ "solarinverter", "energymeter", "energystorage"],
                     "paramTypes":[
                         {
                             "id": "584de5e5-e4ef-48dc-a16f-03b1045b0b68",
