@@ -62,22 +62,26 @@ void IntegrationPluginGenericConsolinno::discoverThings(ThingDiscoveryInfo *info
 		//iterate on result
 		for (Json::Value::ArrayIndex i = 0; i < result.size(); i++) {
 			//Debug out result[i]
-			std::cout << "result[" << i << "]:" << result[i] << std::endl;
+			// std::cout << "result[" << i << "]:" << result[i] << std::endl;
 			//Call processDiscoveryObject with result[i] and info
 			processDiscoveryObject(result[i], info);
 		}
 		info->finish(Thing::ThingErrorNoError);
 	} catch (JsonRpcException &e) {
-		std::cerr << e.what() << std::endl;
+		// std::cerr << e.what() << std::endl;
 		info->finish(Thing::ThingErrorHardwareFailure);
 	}
 	
 }
 
 void IntegrationPluginGenericConsolinno::processDiscoveryObject(const Json::Value &responseObject, ThingDiscoveryInfo *info){
-	ThingDescriptor descriptor(inverterThingClassId, "Generic Consolinno Inverter", "Generic Consolinno Inverter");
+	ThingDescriptor descriptor(
+		inverterThingClassId, 
+		QString::fromStdString(responseObject["manufacturer"].asString()), 
+		QString::fromStdString(responseObject["model"].asString())
+	);
 	ParamList params;
-	params << Param(inverterThingConnectionParamsParamTypeId, QVariant::fromValue((QString::fromStdString(responseObject.asString()))));
+	params << Param(inverterThingConnectionParamsParamTypeId, QVariant::fromValue((QString::fromStdString(responseObject["connectionParams"].asString()))));
 	descriptor.setParams(params);
 	info->addThingDescriptor(descriptor);
 }
@@ -108,24 +112,21 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 					Json::Value block = result[i];
 					//iterate for key value pairs on block
 					for (auto const& key : block.getMemberNames()) {
-						//Debug out key and value
-						// std::cout << "key:" << key << " value:" << block[key] << std::endl;
-						if(key == "Interfaces::pvinverter::frequency"){
-							thing->setStateValue(inverterFrequencyStateTypeId, block[key].asFloat());
-						} else if(key == "Interfaces::pvinverter::totalEnergyProduced"){
-							thing->setStateValue(inverterTotalEnergyProducedStateTypeId, block[key].asFloat());
-						} else if(key == "Interfaces::pvinverter::pvVoltage1"){
-							thing->setStateValue(inverterPvVoltage1StateTypeId, block[key].asFloat());
-						} else if(key == "Interfaces::pvinverter::pvVoltage2"){//Interfaces::pvinverter::pvVoltage2
-							thing->setStateValue(inverterPvVoltage2StateTypeId, block[key].asFloat());
-						} else if(key == "Interfaces::pvinverter::voltagePhaseA"){//Interfaces::pvinverter::voltagePhaseA
-							thing->setStateValue(inverterVoltagePhaseAStateTypeId, block[key].asFloat());
-						} else if(key == "Interfaces::pvinverter::voltagePhaseB"){//Interfaces::pvinverter::voltagePhaseB
-							thing->setStateValue(inverterVoltagePhaseBStateTypeId, block[key].asFloat());
-						} else if(key == "Interfaces::pvinverter::voltagePhaseC"){//Interfaces::pvinverter::voltagePhaseC
-							thing->setStateValue(inverterVoltagePhaseCStateTypeId, block[key].asFloat());
+						//Check if key contains "Interfaces::pvinverter::", if not continue
+						if(key.find("Interfaces::pvinverter::") == std::string::npos){
+							continue;
 						}
-					}				
+
+						//Extract stateName from key after "Interfaces::pvinverter::"
+						QString stateName = QString::fromStdString(key.substr(24));
+						//Get stateValue for variant type
+						QVariant stateValue = thing->stateValue(stateName);
+						//Get type from variant
+						if(stateValue.type() == QVariant::Double){
+							thing->setStateValue(stateName, block[key].asFloat());
+							qCDebug(dcGenericConsolinno()) << "stateValue:" << block[key].asFloat();
+						}
+					}
 				}
 
 				thing->setStateValue(inverterConnectedStateTypeId, true);				
