@@ -13,8 +13,8 @@
                     "name": "genericConsolinnoConnection",
                     "displayName": "Generic Consolinno Inverter",
                     "createMethods": ["discovery", "user"],
-                    "interfaces": ["gateway"],
-                    "providedInterfaces": [ "solarinverter", "energymeter", "energystorage"],
+                    "interfaces": ["solarinverter", "connectable"],
+                    "providedInterfaces": ["energymeter", "energystorage"],
                     "paramTypes":[
                         {
                             "id": "584de5e5-e4ef-48dc-a16f-03b1045b0b68",
@@ -39,6 +39,15 @@
                             "name": "totalEnergyProduced",
                             "displayName": "Total energy produced",
                             "displayNameEvent": "Total energy produced changed",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0.00
+                        },
+                        {
+                            "id": "afb7e3dd-041f-417c-a02f-dc85bc992f87",
+                            "name": "todayEnergyProduced",
+                            "displayName": "Today energy produced",
+                            "displayNameEvent": "Today energy produced changed",
                             "type": "double",
                             "unit": "KiloWattHour",
                             "defaultValue": 0.00
@@ -99,6 +108,34 @@
                             "unit": "Watt",
                             "defaultValue": 0.00
                         },
+                        {
+                            "id": "251e6ca5-dea9-4272-bcd1-1d17c4740c08",
+                            "name": "phaseACurrent",
+                            "displayName": "Phase A current",
+                            "type": "double",
+                            "unit": "Ampere",
+                            "defaultValue": 0.00,
+                            "cached": false
+                        },
+                        {
+                            "id": "deef2adc-53b2-47bd-aa21-0c268a96eb3d",
+                            "name": "phaseBCurrent",
+                            "displayName": "Phase B current",
+                            "type": "double",
+                            "unit": "Ampere",
+                            "defaultValue": 0.00,
+                            "cached": false
+                        },
+                        {
+                            "id": "a9664e99-36c4-42b5-8732-694a0e66f686",
+                            "name": "phaseCCurrent",
+                            "displayName": "Phase C current",
+                            "type": "double",
+                            "unit": "Ampere",
+                            "defaultValue": 0.00,
+                            "cached": false
+                        },
+
                         {
                             "id": "0f071455-060b-4201-8b47-4d44ebe4d66c",
                             "name": "voltagePhaseA",
@@ -360,6 +397,25 @@
                             "unit": "Watt",
                             "defaultValue": 0.00
                         },
+                        {
+                            "id": "b84985a0-c259-471c-ad4b-cbaaf06cc82c",
+                            "name": "voltage",
+                            "displayName": "Voltage",
+                            "type": "double",
+                            "unit": "Volt",
+                            "defaultValue": 0.00,
+                            "cached": false
+                        },
+                        {
+                            "id": "dd52b2ca-41bd-4e20-9cd3-d3bdb0dbab43",
+                            "name": "temperature",
+                            "displayName": "Temperature",
+                            "type": "double",
+                            "unit": "DegreeCelsius",
+                            "defaultValue": 0.00,
+                            "cached": false
+                        }
+,
                         {
                             "id": "1d9f1b6f-3f20-454d-a81d-9c3575d88bd9",
                             "name": "capacity",
