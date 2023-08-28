@@ -55,7 +55,7 @@
                         {
                             "id": "8620a41d-bf05-4b02-a706-ef9a13e0a381",
                             "name": "currentPower",
-                            "displayName": "PV power",
+                            "displayName": "PV DC power",
                             "displayNameEvent": "PV power changed",
                             "type": "double",
                             "unit": "Watt",
@@ -64,7 +64,7 @@
                         {
                             "id": "8b84dfd4-6357-41ff-959f-326e09554b9c",
                             "name": "pvVoltage1",
-                            "displayName": "Voltage PV 1",
+                            "displayName": "DC Voltage PV 1",
                             "displayNameEvent": "Voltage PV 1 changed",
                             "type": "double",
                             "unit": "Volt",
@@ -74,12 +74,21 @@
                         {
                             "id": "c62943f6-be25-4454-a664-332ef66c30ca",
                             "name": "pvVoltage2",
-                            "displayName": "Voltage PV 2",
+                            "displayName": "DC Voltage PV 2",
                             "displayNameEvent": "Voltage PV 2 changed",
                             "type": "double",
                             "unit": "Volt",
                             "defaultValue": 0.00,
                             "suggestLogging": true
+                        },
+                        {
+                            "id": "6fc19b9f-b051-4c2e-9e19-d3530d1e98e2",
+                            "name": "currentPowerTotal",
+                            "displayName": "Total AC power",
+                            "displayNameEvent": "Current power phase A changed",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0.00
                         },
                         {
                             "id": "95666638-990d-40a6-ac46-329201913624",
