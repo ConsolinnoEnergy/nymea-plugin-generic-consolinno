@@ -106,10 +106,13 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 			Json::Value params;
 			params["connectionParams"] = connectionParams.toStdString();
 			params["block"] = -1;
+			Things inverterThings = myThings().filterByParentId(thing->id()).filterByThingClassId(inverterThingClassId);
 			Things meterThings = myThings().filterByParentId(thing->id()).filterByThingClassId(meterThingClassId);
+			Things batteryThings = myThings().filterByParentId(thing->id()).filterByThingClassId(batteryThingClassId);
 
 			bool inverterDataFound = false;
 			bool meterDataFound = false;
+			bool batteryDataFound = false;
 			
 			try {
 				//Save c.CallMethod("discoverAllDevices", params); responce to json object
@@ -126,10 +129,10 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 							//Extract stateName from key after "Interfaces::pvinverter::"
 							QString stateName = QString::fromStdString(key.substr(24));
 							//Get stateValue for variant type
-							QVariant stateValue = thing->stateValue(stateName);
+							QVariant stateValue = inverterThings.first()->stateValue(stateName);
 							//Get type from variant
-							if(thing->hasState(stateName) && stateValue.type() == QVariant::Double){
-								thing->setStateValue(stateName, block[key].asFloat());
+							if(inverterThings.first()->hasState(stateName) && stateValue.type() == QVariant::Double){
+								inverterThings.first()->setStateValue(stateName, block[key].asFloat());
 								// qCDebug(dcGenericConsolinno()) << "stateValue:" << block[key].asFloat();
 							}
 							inverterDataFound = true;
@@ -143,6 +146,16 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 								meterThings.first()->setStateValue(stateName, block[key].asFloat());
 							}
 							meterDataFound = true;
+						} else if(key.find("Interfaces::battery::") != std::string::npos && !meterThings.isEmpty()){
+							//Extract stateName from key after "Interfaces::meter::"
+							QString stateName = QString::fromStdString(key.substr(21));
+							//Get stateValue for variant type
+							QVariant stateValue = batteryThings.first()->stateValue(stateName);
+							//Get type from variant
+							if(batteryThings.first()->hasState(stateName) && stateValue.type() == QVariant::Double){
+								batteryThings.first()->setStateValue(stateName, block[key].asFloat());
+							}
+							batteryDataFound = true;
 						}
 					}
 				}
@@ -155,13 +168,27 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 				thing->setStateValue(genericConsolinnoConnectionConnectedStateTypeId, false);
 			}
 
+			if(!inverterThings.isEmpty()){
+				inverterThings.first()->setStateValue(inverterConnectedStateTypeId, inverterDataFound);
+			}
 			if(!meterThings.isEmpty()){
 				meterThings.first()->setStateValue(meterConnectedStateTypeId, meterDataFound);
 			}
+			if(!batteryThings.isEmpty()){
+				batteryThings.first()->setStateValue(batteryConnectedStateTypeId, batteryDataFound);
+			}
+
 
 		});
 		info->finish(Thing::ThingErrorNoError);    
         
+    } else if (thing->thingClassId() == inverterThingClassId) {
+        // Nothing to do here, we get all information from the inverter connection
+        info->finish(Thing::ThingErrorNoError);
+        Thing *parentThing = myThings().findById(thing->parentId());
+        if (parentThing) {
+            thing->setStateValue(inverterConnectedStateTypeId, parentThing->stateValue(genericConsolinnoConnectionConnectedStateTypeId).toBool());
+        }		
     } else if (thing->thingClassId() == meterThingClassId) {
         // Nothing to do here, we get all information from the inverter connection
         info->finish(Thing::ThingErrorNoError);
@@ -194,10 +221,18 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 void IntegrationPluginGenericConsolinno::postSetupThing(Thing *thing)
 {
     if (thing->thingClassId() == genericConsolinnoConnectionThingClassId) {
-        // Check if w have to set up a child meter for this inverter connection
+        // Check if w have to set up a child meter/inverter/battery for this inverter connection
         if (myThings().filterByParentId(thing->id()).filterByThingClassId(meterThingClassId).isEmpty()) {
             qCDebug(dcGenericConsolinno()) << "Setup new meter for" << thing;
             emit autoThingsAppeared(ThingDescriptors() << ThingDescriptor(meterThingClassId, thing->name() + " meter", QString(), thing->id()));
+        }
+		if (myThings().filterByParentId(thing->id()).filterByThingClassId(inverterThingClassId).isEmpty()) {
+            qCDebug(dcGenericConsolinno()) << "Setup new inverter for" << thing;
+            emit autoThingsAppeared(ThingDescriptors() << ThingDescriptor(inverterThingClassId, thing->name() + " inverter", QString(), thing->id()));
+        }
+		if (myThings().filterByParentId(thing->id()).filterByThingClassId(batteryThingClassId).isEmpty()) {
+            qCDebug(dcGenericConsolinno()) << "Setup new battery for" << thing;
+            emit autoThingsAppeared(ThingDescriptors() << ThingDescriptor(batteryThingClassId, thing->name() + " battery", QString(), thing->id()));
         }
     }
 }

@@ -7,3 +7,5 @@ moc_*
 plugininfo.h
 
 debian/source/
+
+Makefile
