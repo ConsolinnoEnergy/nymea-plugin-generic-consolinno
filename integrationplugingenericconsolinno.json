@@ -42,6 +42,33 @@
                     "displayName": "Generic Consolinno Inverter",
                     "createMethods": ["auto"],
                     "interfaces": ["solarinverter", "connectable"],
+                    "actionTypes": [
+                        {
+                            "id": "60bca780-fd59-4b21-b8a8-f3e895813802",
+                            "name": "setExportLimit",
+                            "displayName": "Set export limit",
+                            "paramTypes": [
+                                {
+                                    "id": "85ee134b-c2d0-49fd-89aa-7edfe80f40c1",
+                                    "name": "exportLimit",
+                                    "displayName": "Export Limit (percent)",
+                                    "type": "int",
+                                    "unit": "Percentage",
+                                    "defaultValue": 100,
+                                    "minValue": 0,
+                                    "maxValue": 100
+                                },
+                                {
+                                    "id": "0f897ca3-a942-4d93-bad9-0fa62037d529",
+                                    "name": "nominalPower",
+                                    "displayName": "Nominal power (watt)",
+                                    "type": "int",
+                                    "unit": "Watt",
+                                    "defaultValue": 10000
+                                }
+                            ]
+                        }
+                    ],
                     "paramTypes": [],
                     "stateTypes": [
                         {
@@ -216,6 +243,15 @@
                             "displayNameEvent": "Energy feed to battery total changed",
                             "type": "double",
                             "unit": "KiloWattHour",
+                            "defaultValue": 0.00
+                        },
+                        {
+                            "id": "93fa06ff-dc56-4064-a055-2e2ca5eaba9f",
+                            "name": "nominalPower",
+                            "displayName": "Nominal Power AC",
+                            "displayNameEvent": "Nominal power changed",
+                            "type": "double",
+                            "unit": "Watt",
                             "defaultValue": 0.00
                         }
                     ]

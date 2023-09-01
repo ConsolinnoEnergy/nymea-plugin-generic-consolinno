@@ -239,7 +239,42 @@ void IntegrationPluginGenericConsolinno::postSetupThing(Thing *thing)
 
 void IntegrationPluginGenericConsolinno::executeAction(ThingActionInfo *info)
 {
-    info->finish(Thing::ThingErrorNoError);
+	if (info->action().actionTypeId() == inverterSetExportLimitActionTypeId) {
+		// params 
+		int valuePercent = info->action().paramValue(inverterSetExportLimitActionExportLimitParamTypeId).toInt();
+		int nominalPowerWatt = info->action().paramValue(inverterSetExportLimitActionNominalPowerParamTypeId).toInt();
+
+		// std::cout << "action, val: " << valuePercent << std::endl;
+
+		Thing *parentThing = myThings().findById(info->thing()->parentId());
+		QString connectionParams = parentThing->paramValue(genericConsolinnoConnectionThingConnectionParamsParamTypeId).toString();
+		//Jsonrpc request to set limit
+		HttpClient client(urlModbusRTU);
+		Client c(client);
+		Json::Value params;
+		params["connectionParams"] = connectionParams.toStdString();
+		params["value"] = valuePercent;
+		params["nominalPower"] = nominalPowerWatt;
+
+		Json::Value result;
+		QString errMes = "exception";
+		try {
+			result = c.CallMethod("setExportLimit", params);
+		} catch (JsonRpcException &e) {
+			// std::cerr << e.what() << std::endl;
+			// info->thing()->setStateValue(genericConsolinnoConnectionConnectedStateTypeId, false);
+			errMes = QString::fromStdString("export limit failed: " + std::string(e.what()));
+			info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP(errMes));
+		}
+
+		if (result.get("state", "failed").asString() == "successful") {
+			info->finish(Thing::ThingErrorNoError);
+		} else {
+			errMes = "export limit failed: " + QString::fromStdString(result.get("reason","unknown").asString());
+			info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP(errMes));
+		}
+	}
+    
 }
 
 void IntegrationPluginGenericConsolinno::thingRemoved(Thing *thing)
@@ -248,5 +283,20 @@ void IntegrationPluginGenericConsolinno::thingRemoved(Thing *thing)
     // (e.g. disconnect from the device) here.
 
     qCDebug(dcGenericConsolinno()) << "thingRemoved : Remove thing" << thing;
+
+	if (thing->thingClassId() == genericConsolinnoConnectionThingClassId) {
+		thing->deleteLater();
+	}
+	if (thing->thingClassId() == inverterThingClassId) {
+		delete thing;
+	}
+	if (thing->thingClassId() == meterThingClassId) {
+		delete thing;
+	}
+	if (thing->thingClassId() == batteryThingClassId) {
+		delete thing;
+	}
+	
+
 }
 
