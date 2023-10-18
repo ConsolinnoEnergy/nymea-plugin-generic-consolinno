@@ -117,7 +117,7 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 			try {
 				//Save c.CallMethod("discoverAllDevices", params); responce to json object
 				Json::Value result = c.CallMethod("getCurrentData", params);
-					
+
 				//iterate on result assuming it is an array
 				for (Json::Value::ArrayIndex i = 0; i < result.size(); i++) {
 					//each element is a json object naming a modbus block
@@ -125,7 +125,7 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 					//iterate for key value pairs on block
 					for (auto const& key : block.getMemberNames()) {
 						//Check if key contains "Interfaces::pvinverter::"
-						if(key.find("Interfaces::pvinverter::") != std::string::npos){
+						if(key.find("Interfaces::pvinverter::") != std::string::npos && !inverterThings.isEmpty()){
 							//Extract stateName from key after "Interfaces::pvinverter::"
 							QString stateName = QString::fromStdString(key.substr(24));
 							//Get stateValue for variant type
@@ -146,8 +146,8 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 								meterThings.first()->setStateValue(stateName, block[key].asFloat());
 							}
 							meterDataFound = true;
-						} else if(key.find("Interfaces::battery::") != std::string::npos && !meterThings.isEmpty()){
-							//Extract stateName from key after "Interfaces::meter::"
+						} else if(key.find("Interfaces::battery::") != std::string::npos && !batteryThings.isEmpty()){
+							//Extract stateName from key after "Interfaces::battery::"
 							QString stateName = QString::fromStdString(key.substr(21));
 							//Get stateValue for variant type
 							QVariant stateValue = batteryThings.first()->stateValue(stateName);
@@ -284,18 +284,11 @@ void IntegrationPluginGenericConsolinno::thingRemoved(Thing *thing)
 
     qCDebug(dcGenericConsolinno()) << "thingRemoved : Remove thing" << thing;
 
-	if (thing->thingClassId() == genericConsolinnoConnectionThingClassId) {
-		thing->deleteLater();
-	}
-	if (thing->thingClassId() == inverterThingClassId) {
-		delete thing;
-	}
-	if (thing->thingClassId() == meterThingClassId) {
-		delete thing;
-	}
-	if (thing->thingClassId() == batteryThingClassId) {
-		delete thing;
-	}
+	if (m_timer && myThings().isEmpty()) {
+        qCDebug(dcGenericConsolinno()) << "Stopping refresh timer";
+        hardwareManager()->pluginTimerManager()->unregisterTimer(m_timer);
+        m_timer = nullptr;
+    }
 	
 
 }
