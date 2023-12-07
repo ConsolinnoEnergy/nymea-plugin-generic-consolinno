@@ -444,15 +444,6 @@
                             "defaultValue": 0
                         },
                         {
-                            "id": "3d816c72-36ad-4ebf-89ea-75f7f4466f27",
-                            "name": "chargingState",
-                            "displayName": "Charging state",
-                            "displayNameEvent": "Charging state changed",
-                            "type": "QString",
-                            "possibleValues": ["idle", "charging", "discharging"],
-                            "defaultValue": "idle"
-                        },
-                        {
                             "id": "e820efab-8a46-4c48-a14f-95964cb44f11",
                             "name": "currentPower",
                             "displayName": "Instantaneous power",
@@ -478,8 +469,7 @@
                             "unit": "DegreeCelsius",
                             "defaultValue": 0.00,
                             "cached": false
-                        }
-,
+                        },
                         {
                             "id": "1d9f1b6f-3f20-454d-a81d-9c3575d88bd9",
                             "name": "capacity",

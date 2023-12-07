@@ -151,9 +151,11 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 							QString stateName = QString::fromStdString(key.substr(21));
 							//Get stateValue for variant type
 							QVariant stateValue = batteryThings.first()->stateValue(stateName);
+							//qCDebug(dcGenericConsolinno()) << "bat name" << stateName << "stateValue:" << stateValue;
 							//Get type from variant
-							if(batteryThings.first()->hasState(stateName) && stateValue.type() == QVariant::Double){
+							if(batteryThings.first()->hasState(stateName)){
 								batteryThings.first()->setStateValue(stateName, block[key].asFloat());
+								//qCDebug(dcGenericConsolinno()) << "bat name" << stateName << "block[key].asFloat():" << block[key].asFloat();
 							}
 							batteryDataFound = true;
 						}
