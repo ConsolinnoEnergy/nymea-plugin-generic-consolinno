@@ -11,10 +11,10 @@
                 {
                     "id": "79132b53-c55e-4a92-b0af-11bccb33bebb",
                     "name": "genericConsolinnoConnection",
-                    "displayName": "Generic Consolinno Inverter",
+                    "displayName": "Generic Consolinno Gateway",
                     "createMethods": ["discovery", "user"],
                     "interfaces": ["gateway"],
-                    "providedInterfaces": [ "solarinverter", "energymeter", "energystorage"],
+                    "providedInterfaces": ["solarinverter", "energymeter", "energystorage"],
                     "paramTypes":[
                         {
                             "id": "584de5e5-e4ef-48dc-a16f-03b1045b0b68",
@@ -33,6 +33,52 @@
                             "type": "bool",
                             "defaultValue": false,
                             "cached": false
+                        }
+                    ]
+                },
+                {
+                    "id": "1fdfde5d-ae6a-48e0-a52f-88f28fa781da",
+                    "name": "inverter",
+                    "displayName": "Generic Consolinno Inverter",
+                    "createMethods": ["auto"],
+                    "interfaces": ["solarinverter", "connectable"],
+                    "actionTypes": [
+                        {
+                            "id": "60bca780-fd59-4b21-b8a8-f3e895813802",
+                            "name": "setExportLimit",
+                            "displayName": "Set export limit",
+                            "paramTypes": [
+                                {
+                                    "id": "85ee134b-c2d0-49fd-89aa-7edfe80f40c1",
+                                    "name": "exportLimit",
+                                    "displayName": "Export Limit (percent)",
+                                    "type": "int",
+                                    "unit": "Percentage",
+                                    "defaultValue": 100,
+                                    "minValue": 0,
+                                    "maxValue": 100
+                                },
+                                {
+                                    "id": "0f897ca3-a942-4d93-bad9-0fa62037d529",
+                                    "name": "nominalPower",
+                                    "displayName": "Nominal power (watt)",
+                                    "type": "int",
+                                    "unit": "Watt",
+                                    "defaultValue": 10000
+                                }
+                            ]
+                        }
+                    ],
+                    "paramTypes": [],
+                    "stateTypes": [
+                        {
+                            "id": "c53d368e-c0c9-4b76-8e7d-6b4d0d690721",
+                            "name": "connected",
+                            "displayName": "Connected",
+                            "displayNameEvent": "Connected changed",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "cached": false
                         },
                         {
                             "id": "98ad322c-98b7-442f-a780-4639f32e6f9b",
@@ -44,9 +90,18 @@
                             "defaultValue": 0.00
                         },
                         {
+                            "id": "afb7e3dd-041f-417c-a02f-dc85bc992f87",
+                            "name": "todayEnergyProduced",
+                            "displayName": "Today energy produced",
+                            "displayNameEvent": "Today energy produced changed",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0.00
+                        },
+                        {
                             "id": "8620a41d-bf05-4b02-a706-ef9a13e0a381",
                             "name": "currentPower",
-                            "displayName": "PV power",
+                            "displayName": "PV DC power",
                             "displayNameEvent": "PV power changed",
                             "type": "double",
                             "unit": "Watt",
@@ -55,7 +110,7 @@
                         {
                             "id": "8b84dfd4-6357-41ff-959f-326e09554b9c",
                             "name": "pvVoltage1",
-                            "displayName": "Voltage PV 1",
+                            "displayName": "DC Voltage PV 1",
                             "displayNameEvent": "Voltage PV 1 changed",
                             "type": "double",
                             "unit": "Volt",
@@ -65,12 +120,21 @@
                         {
                             "id": "c62943f6-be25-4454-a664-332ef66c30ca",
                             "name": "pvVoltage2",
-                            "displayName": "Voltage PV 2",
+                            "displayName": "DC Voltage PV 2",
                             "displayNameEvent": "Voltage PV 2 changed",
                             "type": "double",
                             "unit": "Volt",
                             "defaultValue": 0.00,
                             "suggestLogging": true
+                        },
+                        {
+                            "id": "6fc19b9f-b051-4c2e-9e19-d3530d1e98e2",
+                            "name": "currentPowerTotal",
+                            "displayName": "Total AC power",
+                            "displayNameEvent": "Current power phase A changed",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0.00
                         },
                         {
                             "id": "95666638-990d-40a6-ac46-329201913624",
@@ -99,6 +163,34 @@
                             "unit": "Watt",
                             "defaultValue": 0.00
                         },
+                        {
+                            "id": "251e6ca5-dea9-4272-bcd1-1d17c4740c08",
+                            "name": "phaseACurrent",
+                            "displayName": "Phase A current",
+                            "type": "double",
+                            "unit": "Ampere",
+                            "defaultValue": 0.00,
+                            "cached": false
+                        },
+                        {
+                            "id": "deef2adc-53b2-47bd-aa21-0c268a96eb3d",
+                            "name": "phaseBCurrent",
+                            "displayName": "Phase B current",
+                            "type": "double",
+                            "unit": "Ampere",
+                            "defaultValue": 0.00,
+                            "cached": false
+                        },
+                        {
+                            "id": "a9664e99-36c4-42b5-8732-694a0e66f686",
+                            "name": "phaseCCurrent",
+                            "displayName": "Phase C current",
+                            "type": "double",
+                            "unit": "Ampere",
+                            "defaultValue": 0.00,
+                            "cached": false
+                        },
+
                         {
                             "id": "0f071455-060b-4201-8b47-4d44ebe4d66c",
                             "name": "voltagePhaseA",
@@ -151,6 +243,15 @@
                             "displayNameEvent": "Energy feed to battery total changed",
                             "type": "double",
                             "unit": "KiloWattHour",
+                            "defaultValue": 0.00
+                        },
+                        {
+                            "id": "93fa06ff-dc56-4064-a055-2e2ca5eaba9f",
+                            "name": "nominalPower",
+                            "displayName": "Nominal Power AC",
+                            "displayNameEvent": "Nominal power changed",
+                            "type": "double",
+                            "unit": "Watt",
                             "defaultValue": 0.00
                         }
                     ]
@@ -343,15 +444,6 @@
                             "defaultValue": 0
                         },
                         {
-                            "id": "3d816c72-36ad-4ebf-89ea-75f7f4466f27",
-                            "name": "chargingState",
-                            "displayName": "Charging state",
-                            "displayNameEvent": "Charging state changed",
-                            "type": "QString",
-                            "possibleValues": ["idle", "charging", "discharging"],
-                            "defaultValue": "idle"
-                        },
-                        {
                             "id": "e820efab-8a46-4c48-a14f-95964cb44f11",
                             "name": "currentPower",
                             "displayName": "Instantaneous power",
@@ -359,6 +451,24 @@
                             "type": "double",
                             "unit": "Watt",
                             "defaultValue": 0.00
+                        },
+                        {
+                            "id": "b84985a0-c259-471c-ad4b-cbaaf06cc82c",
+                            "name": "voltage",
+                            "displayName": "Voltage",
+                            "type": "double",
+                            "unit": "Volt",
+                            "defaultValue": 0.00,
+                            "cached": false
+                        },
+                        {
+                            "id": "dd52b2ca-41bd-4e20-9cd3-d3bdb0dbab43",
+                            "name": "temperature",
+                            "displayName": "Temperature",
+                            "type": "double",
+                            "unit": "DegreeCelsius",
+                            "defaultValue": 0.00,
+                            "cached": false
                         },
                         {
                             "id": "1d9f1b6f-3f20-454d-a81d-9c3575d88bd9",

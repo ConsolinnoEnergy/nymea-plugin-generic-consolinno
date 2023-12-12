@@ -106,15 +106,18 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 			Json::Value params;
 			params["connectionParams"] = connectionParams.toStdString();
 			params["block"] = -1;
+			Things inverterThings = myThings().filterByParentId(thing->id()).filterByThingClassId(inverterThingClassId);
 			Things meterThings = myThings().filterByParentId(thing->id()).filterByThingClassId(meterThingClassId);
+			Things batteryThings = myThings().filterByParentId(thing->id()).filterByThingClassId(batteryThingClassId);
 
 			bool inverterDataFound = false;
 			bool meterDataFound = false;
+			bool batteryDataFound = false;
 			
 			try {
 				//Save c.CallMethod("discoverAllDevices", params); responce to json object
 				Json::Value result = c.CallMethod("getCurrentData", params);
-					
+
 				//iterate on result assuming it is an array
 				for (Json::Value::ArrayIndex i = 0; i < result.size(); i++) {
 					//each element is a json object naming a modbus block
@@ -122,14 +125,14 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 					//iterate for key value pairs on block
 					for (auto const& key : block.getMemberNames()) {
 						//Check if key contains "Interfaces::pvinverter::"
-						if(key.find("Interfaces::pvinverter::") != std::string::npos){
+						if(key.find("Interfaces::pvinverter::") != std::string::npos && !inverterThings.isEmpty()){
 							//Extract stateName from key after "Interfaces::pvinverter::"
 							QString stateName = QString::fromStdString(key.substr(24));
 							//Get stateValue for variant type
-							QVariant stateValue = thing->stateValue(stateName);
+							QVariant stateValue = inverterThings.first()->stateValue(stateName);
 							//Get type from variant
-							if(thing->hasState(stateName) && stateValue.type() == QVariant::Double){
-								thing->setStateValue(stateName, block[key].asFloat());
+							if(inverterThings.first()->hasState(stateName) && stateValue.type() == QVariant::Double){
+								inverterThings.first()->setStateValue(stateName, block[key].asFloat());
 								// qCDebug(dcGenericConsolinno()) << "stateValue:" << block[key].asFloat();
 							}
 							inverterDataFound = true;
@@ -143,6 +146,18 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 								meterThings.first()->setStateValue(stateName, block[key].asFloat());
 							}
 							meterDataFound = true;
+						} else if(key.find("Interfaces::battery::") != std::string::npos && !batteryThings.isEmpty()){
+							//Extract stateName from key after "Interfaces::battery::"
+							QString stateName = QString::fromStdString(key.substr(21));
+							//Get stateValue for variant type
+							QVariant stateValue = batteryThings.first()->stateValue(stateName);
+							//qCDebug(dcGenericConsolinno()) << "bat name" << stateName << "stateValue:" << stateValue;
+							//Get type from variant
+							if(batteryThings.first()->hasState(stateName)){
+								batteryThings.first()->setStateValue(stateName, block[key].asFloat());
+								//qCDebug(dcGenericConsolinno()) << "bat name" << stateName << "block[key].asFloat():" << block[key].asFloat();
+							}
+							batteryDataFound = true;
 						}
 					}
 				}
@@ -155,13 +170,27 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 				thing->setStateValue(genericConsolinnoConnectionConnectedStateTypeId, false);
 			}
 
+			if(!inverterThings.isEmpty()){
+				inverterThings.first()->setStateValue(inverterConnectedStateTypeId, inverterDataFound);
+			}
 			if(!meterThings.isEmpty()){
 				meterThings.first()->setStateValue(meterConnectedStateTypeId, meterDataFound);
 			}
+			if(!batteryThings.isEmpty()){
+				batteryThings.first()->setStateValue(batteryConnectedStateTypeId, batteryDataFound);
+			}
+
 
 		});
 		info->finish(Thing::ThingErrorNoError);    
         
+    } else if (thing->thingClassId() == inverterThingClassId) {
+        // Nothing to do here, we get all information from the inverter connection
+        info->finish(Thing::ThingErrorNoError);
+        Thing *parentThing = myThings().findById(thing->parentId());
+        if (parentThing) {
+            thing->setStateValue(inverterConnectedStateTypeId, parentThing->stateValue(genericConsolinnoConnectionConnectedStateTypeId).toBool());
+        }		
     } else if (thing->thingClassId() == meterThingClassId) {
         // Nothing to do here, we get all information from the inverter connection
         info->finish(Thing::ThingErrorNoError);
@@ -194,17 +223,60 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 void IntegrationPluginGenericConsolinno::postSetupThing(Thing *thing)
 {
     if (thing->thingClassId() == genericConsolinnoConnectionThingClassId) {
-        // Check if w have to set up a child meter for this inverter connection
+        // Check if w have to set up a child meter/inverter/battery for this inverter connection
         if (myThings().filterByParentId(thing->id()).filterByThingClassId(meterThingClassId).isEmpty()) {
             qCDebug(dcGenericConsolinno()) << "Setup new meter for" << thing;
             emit autoThingsAppeared(ThingDescriptors() << ThingDescriptor(meterThingClassId, thing->name() + " meter", QString(), thing->id()));
+        }
+		if (myThings().filterByParentId(thing->id()).filterByThingClassId(inverterThingClassId).isEmpty()) {
+            qCDebug(dcGenericConsolinno()) << "Setup new inverter for" << thing;
+            emit autoThingsAppeared(ThingDescriptors() << ThingDescriptor(inverterThingClassId, thing->name() + " inverter", QString(), thing->id()));
+        }
+		if (myThings().filterByParentId(thing->id()).filterByThingClassId(batteryThingClassId).isEmpty()) {
+            qCDebug(dcGenericConsolinno()) << "Setup new battery for" << thing;
+            emit autoThingsAppeared(ThingDescriptors() << ThingDescriptor(batteryThingClassId, thing->name() + " battery", QString(), thing->id()));
         }
     }
 }
 
 void IntegrationPluginGenericConsolinno::executeAction(ThingActionInfo *info)
 {
-    info->finish(Thing::ThingErrorNoError);
+	if (info->action().actionTypeId() == inverterSetExportLimitActionTypeId) {
+		// params 
+		int valuePercent = info->action().paramValue(inverterSetExportLimitActionExportLimitParamTypeId).toInt();
+		int nominalPowerWatt = info->action().paramValue(inverterSetExportLimitActionNominalPowerParamTypeId).toInt();
+
+		// std::cout << "action, val: " << valuePercent << std::endl;
+
+		Thing *parentThing = myThings().findById(info->thing()->parentId());
+		QString connectionParams = parentThing->paramValue(genericConsolinnoConnectionThingConnectionParamsParamTypeId).toString();
+		//Jsonrpc request to set limit
+		HttpClient client(urlModbusRTU);
+		Client c(client);
+		Json::Value params;
+		params["connectionParams"] = connectionParams.toStdString();
+		params["value"] = valuePercent;
+		params["nominalPower"] = nominalPowerWatt;
+
+		Json::Value result;
+		QString errMes = "exception";
+		try {
+			result = c.CallMethod("setExportLimit", params);
+		} catch (JsonRpcException &e) {
+			// std::cerr << e.what() << std::endl;
+			// info->thing()->setStateValue(genericConsolinnoConnectionConnectedStateTypeId, false);
+			errMes = QString::fromStdString("export limit failed: " + std::string(e.what()));
+			info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP(errMes));
+		}
+
+		if (result.get("state", "failed").asString() == "successful") {
+			info->finish(Thing::ThingErrorNoError);
+		} else {
+			errMes = "export limit failed: " + QString::fromStdString(result.get("reason","unknown").asString());
+			info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP(errMes));
+		}
+	}
+    
 }
 
 void IntegrationPluginGenericConsolinno::thingRemoved(Thing *thing)
@@ -213,5 +285,13 @@ void IntegrationPluginGenericConsolinno::thingRemoved(Thing *thing)
     // (e.g. disconnect from the device) here.
 
     qCDebug(dcGenericConsolinno()) << "thingRemoved : Remove thing" << thing;
+
+	if (m_timer && myThings().isEmpty()) {
+        qCDebug(dcGenericConsolinno()) << "Stopping refresh timer";
+        hardwareManager()->pluginTimerManager()->unregisterTimer(m_timer);
+        m_timer = nullptr;
+    }
+	
+
 }
 
