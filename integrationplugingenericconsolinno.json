@@ -46,12 +46,12 @@
                         {
                             "id": "60bca780-fd59-4b21-b8a8-f3e895813802",
                             "name": "setExportLimit",
-                            "displayName": "Set export limit",
+                            "displayName": "Set Grid export limit",
                             "paramTypes": [
                                 {
                                     "id": "85ee134b-c2d0-49fd-89aa-7edfe80f40c1",
                                     "name": "exportLimit",
-                                    "displayName": "Export Limit (percent)",
+                                    "displayName": "Grid Export Limit (percent of inverter nominal power)",
                                     "type": "int",
                                     "unit": "Percentage",
                                     "defaultValue": 100,
@@ -61,7 +61,7 @@
                                 {
                                     "id": "0f897ca3-a942-4d93-bad9-0fa62037d529",
                                     "name": "nominalPower",
-                                    "displayName": "Nominal power (watt)",
+                                    "displayName": "Inverter Nominal power (watt)",
                                     "type": "int",
                                     "unit": "Watt",
                                     "defaultValue": 10000
@@ -250,6 +250,24 @@
                             "name": "nominalPower",
                             "displayName": "Nominal Power AC",
                             "displayNameEvent": "Nominal power changed",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0.00
+                        },
+                        {
+                            "id": "d12c9da6-e6c3-4522-9d41-372739778f7f",
+                            "name": "limitPV",
+                            "displayName": "actual PV power limit",
+                            "displayNameEvent": "PV power limit changed",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0.00
+                        },
+                        {
+                            "id": "4401e7c7-8450-4c1e-9224-ae46388d8ee4",
+                            "name": "exportLimit",
+                            "displayName": "actual Grid export power limit",
+                            "displayNameEvent": "Grid export power limit changed",
                             "type": "double",
                             "unit": "Watt",
                             "defaultValue": 0.00
