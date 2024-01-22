@@ -20,5 +20,5 @@ git clone git@gitlab.consolinno-it.de:leafletfirmware/nymea/nymea-plugin-generic
 cd nymea-plugin-generic-consolinno
 sudo ~/.local/bin/dc-armv7-nymea-d10 make clean
 sudo ~/.local/bin/dc-armv7-nymea-d10 make distclean
-sudo ~/.local/bin/dc-armv7-nymea-d10 bash -c "sudo apt update && sudo apt install libjsonrpccpp-dev:armhf -y && sudo apt install libcurl4-openssl-dev:armhf && qmake && make -j6"
+sudo ~/.local/bin/dc-armv7-nymea-d10 bash -c "sudo apt update && sudo apt install libjsonrpccpp-dev:armhf libcurl4-openssl-dev:armhf -y && qmake && make -j6"
 ```
