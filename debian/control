@@ -7,6 +7,8 @@ Build-depends: debhelper (>= 9.0.0),
                nymea-dev-tools:native,
                qtbase5-dev,
                pkg-config,
+               libjsonrpccpp-dev:armhf,
+               libcurl4-openssl-dev:armhf
 Standards-Version: 3.9.3
 
 Package: nymea-plugin-generic-consolinno
