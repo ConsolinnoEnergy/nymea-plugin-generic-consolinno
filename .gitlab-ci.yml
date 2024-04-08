@@ -1,3 +1,10 @@
+build:debian-bullseye:amd64:prod:
+  rules:
+    - when: never
+build:debian-bullseye:armhf:prod:
+  rules:
+    - when: never
+
 include:
   - project: 'leafletfirmware/nymea/nymea-ci'
     file: '/nymea/pipeline.yml'
