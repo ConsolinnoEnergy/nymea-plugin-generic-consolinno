@@ -50,14 +50,17 @@ void IntegrationPluginGenericConsolinno::discoverThings(ThingDiscoveryInfo *info
     //Init QT jsonrpc client, call method: discoverDevice with param identifier: ""
 	qCDebug(dcGenericConsolinno()) << "Discovering Generic Consolinno Inverters";
 
+	// Search for devices in the network
 	NetworkDeviceDiscoveryReply *discoveryReply = hardwareManager()->networkDeviceDiscovery()->discover();
 	connect(discoveryReply, &NetworkDeviceDiscoveryReply::finished, this, [=]() {
 		qCDebug(dcGenericConsolinno()) << "Finished network discovery";
 		// qCWarning(dcGenericConsolinno()) << "network cache " << hardwareManager()->networkDeviceDiscovery()->cache();
 
+		// Get the nymea cache of all found devices
 		QHash<MacAddress, NetworkDeviceInfo> deviceCache = hardwareManager()->networkDeviceDiscovery()->cache();
 		Json::Value discoveredIpAddresses(Json::arrayValue);
 
+		// Write the ip addresses of the discovered devices into a JsonArray
 		for(QHash<MacAddress, NetworkDeviceInfo>::const_iterator it=deviceCache.cbegin(); it!=deviceCache.cend(); ++it)
 		{
 			// qCWarning(dcGenericConsolinno()) << "IP address " << it.value().address().toQString().toStdString(); 
@@ -65,6 +68,9 @@ void IntegrationPluginGenericConsolinno::discoverThings(ThingDiscoveryInfo *info
 		}
 
 		HttpClient client(urlModbusRTU);
+		// Set the timeout for the curl command in msec.
+		// If the timeout is set to low, curl will timeout before all devices have been checked and nymea will report,
+		// that now devices have been found.
 		client.SetTimeout(30000);
 		Client c(client);
 
