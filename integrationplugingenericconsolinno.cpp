@@ -20,7 +20,7 @@
 #include "integrationplugingenericconsolinno.h"
 #include "plugininfo.h"
 
-#include "network/networkdevicediscovery.h"
+#include <network/networkdevicediscovery.h>
 #include <network/networkaccessmanager.h>
 #include <plugintimer.h>
 #include <QtNetwork>
@@ -50,28 +50,52 @@ void IntegrationPluginGenericConsolinno::discoverThings(ThingDiscoveryInfo *info
     //Init QT jsonrpc client, call method: discoverDevice with param identifier: ""
 	qCDebug(dcGenericConsolinno()) << "Discovering Generic Consolinno Inverters";
 
-	HttpClient client(urlModbusRTU);
-	Client c(client);
+	// Search for devices in the network
+	NetworkDeviceDiscoveryReply *discoveryReply = hardwareManager()->networkDeviceDiscovery()->discover();
+	connect(discoveryReply, &NetworkDeviceDiscoveryReply::finished, this, [=]() {
+		qCDebug(dcGenericConsolinno()) << "Finished network discovery";
+		// qCWarning(dcGenericConsolinno()) << "network cache " << hardwareManager()->networkDeviceDiscovery()->cache();
 
-	Json::Value params;
-	params["identifier"] = "";
+		// Get the nymea cache of all found devices
+		QHash<MacAddress, NetworkDeviceInfo> deviceCache = hardwareManager()->networkDeviceDiscovery()->cache();
+		Json::Value discoveredIpAddresses(Json::arrayValue);
 
-	try {
-		//Save c.CallMethod("discoverAllDevices", params); responce to json object
-		Json::Value result = c.CallMethod("discoverAllDevices", params);
-		//iterate on result
-		for (Json::Value::ArrayIndex i = 0; i < result.size(); i++) {
-			//Debug out result[i]
-			// std::cout << "result[" << i << "]:" << result[i] << std::endl;
-			//Call processDiscoveryObject with result[i] and info
-			processDiscoveryObject(result[i], info);
+		// Write the ip addresses of the discovered devices into a JsonArray
+		for(QHash<MacAddress, NetworkDeviceInfo>::const_iterator it=deviceCache.cbegin(); it!=deviceCache.cend(); ++it)
+		{
+			// qCWarning(dcGenericConsolinno()) << "IP address " << it.value().address().toQString().toStdString(); 
+			discoveredIpAddresses.append(it.value().address().toString().toStdString());;
 		}
-		info->finish(Thing::ThingErrorNoError);
-	} catch (JsonRpcException &e) {
-		// std::cerr << e.what() << std::endl;
-		info->finish(Thing::ThingErrorHardwareFailure);
-	}
-	
+
+		HttpClient client(urlModbusRTU);
+		// Set the timeout for the curl command in msec.
+		// If the timeout is set to low, curl will timeout before all devices have been checked and nymea will report,
+		// that now devices have been found.
+		client.SetTimeout(30000);
+		Client c(client);
+
+		Json::Value params;
+		params["identifier"] = "";
+		params["discoveredIpAddresses"] = discoveredIpAddresses;
+
+		try {
+			//Save c.CallMethod("discoverAllDevices", params); responce to json object
+			Json::Value result = c.CallMethod("discoverAllDevices", params);
+			//iterate on result
+			std::cout << result << result.size() << std::endl;
+			for (Json::Value::ArrayIndex i = 0; i < result.size(); i++) {
+				//Debug out result[i]
+				// std::cout << "result[" << i << "]:" << result[i] << std::endl;
+				//Call processDiscoveryObject with result[i] and info
+				processDiscoveryObject(result[i], info);
+			}
+			info->finish(Thing::ThingErrorNoError);
+		} catch (JsonRpcException &e) {
+			// std::cerr << e.what() << std::endl;
+			info->finish(Thing::ThingErrorHardwareFailure);
+		}
+	});
+
 }
 
 void IntegrationPluginGenericConsolinno::processDiscoveryObject(const Json::Value &responseObject, ThingDiscoveryInfo *info){
