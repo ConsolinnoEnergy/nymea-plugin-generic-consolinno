@@ -60,6 +60,10 @@ private:
     // PluginTimer *m_timer2 = nullptr;  // apparently the plugin does not work with 2 PluginTimers
     QTcpSocket *m_sockets;
 
+    QTimer *m_batteryPowerTimer = nullptr;
+    int batteryPower = 0;
+    uint batteryTimeout = 0;
+
 	std::string urlModbusRTU= "http://127.0.0.1:8383";
 
 };
