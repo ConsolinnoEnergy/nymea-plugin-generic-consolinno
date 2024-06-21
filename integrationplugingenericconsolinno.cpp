@@ -32,6 +32,7 @@
 #include <QtCore/qglobal.h>
 #include <QtCore/QRandomGenerator>
 #include <iostream>
+#include <limits>
 
 IntegrationPluginGenericConsolinno::IntegrationPluginGenericConsolinno()
 {
@@ -243,10 +244,20 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 
 		// battery power set
 		connect(m_batteryPowerTimer, &QTimer::timeout, thing, [this, thing]() {
-			int power = thing->stateValue(batteryForcePowerStateTypeId).toInt();
-			int enable = thing->stateValue(batteryEnableForcePowerStateTypeId).toInt();
-			std::cout << "battery connect triggered, timeout: " << batteryTimeout << ", power: " << batteryPower << "powerstate: " << power << "enable: " << enable << std::endl;
+			bool enable = thing->stateValue(batteryEnableForcePowerStateTypeId).toBool();
+
+			std::cout << "battery timer triggered" << std::endl;
+			if (enable) {
+				setBatteryPower(thing);
+			} else {
+				disableRemoteControl(thing);
+			}
+			
 		});
+
+		int timeout = thing->stateValue(batteryForcePowerTimeoutStateTypeId).toInt();
+		// send command not every timeout seconds, but half of it (FoxESS sometimes counts significantly faster than reality, 60s in reality is ~30s for FoxESS)
+		m_batteryPowerTimer->start(timeout/2*1000);
 
         Thing *parentThing = myThings().findById(thing->parentId());
         if (parentThing) {
@@ -278,8 +289,12 @@ void IntegrationPluginGenericConsolinno::postSetupThing(Thing *thing)
 
 void IntegrationPluginGenericConsolinno::executeAction(ThingActionInfo *info)
 {
+	Json::Value result;
+	std::string remoteFunctionName = "none";
+
 	if (info->action().actionTypeId() == inverterSetExportLimitActionTypeId) {
-		// params 
+		// params
+		remoteFunctionName = "setExportLimit";
 		int valuePercent = info->action().paramValue(inverterSetExportLimitActionExportLimitParamTypeId).toInt();
 		int nominalPowerWatt = info->action().paramValue(inverterSetExportLimitActionNominalPowerParamTypeId).toInt();
 
@@ -295,10 +310,9 @@ void IntegrationPluginGenericConsolinno::executeAction(ThingActionInfo *info)
 		params["value"] = valuePercent;
 		params["nominalPower"] = nominalPowerWatt;
 
-		Json::Value result;
 		QString errMes = "exception";
 		try {
-			result = c.CallMethod("setExportLimit", params);
+			result = c.CallMethod(remoteFunctionName, params);
 		} catch (JsonRpcException &e) {
 			// std::cerr << e.what() << std::endl;
 			// info->thing()->setStateValue(genericConsolinnoConnectionConnectedStateTypeId, false);
@@ -306,12 +320,6 @@ void IntegrationPluginGenericConsolinno::executeAction(ThingActionInfo *info)
 			info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP(errMes));
 		}
 
-		if (result.get("state", "failed").asString() == "successful") {
-			info->finish(Thing::ThingErrorNoError);
-		} else {
-			errMes = "export limit failed: " + QString::fromStdString(result.get("reason","unknown").asString());
-			info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP(errMes));
-		}
 	} else if (info->action().actionTypeId() == batteryEnableForcePowerActionTypeId) {
 		
 		bool enableToggle = info->action().paramValue(batteryEnableForcePowerActionEnableForcePowerParamTypeId).toBool();
@@ -319,30 +327,62 @@ void IntegrationPluginGenericConsolinno::executeAction(ThingActionInfo *info)
 		std::cout << "mode changed:" << enableToggle << std::endl;
 
 		if (enableToggle) {
-			if (!m_batteryPowerTimer->isActive()) {
-				m_batteryPowerTimer->start(5000);
-			}
+			// timer is not restart on every toggle change, but sent continuosly
+			//but trigger sent once:
+			remoteFunctionName = "setBatteryPower";
+			result = setBatteryPower(info->thing());
 		} else {
-			// stop timer
-			if (m_batteryPowerTimer->isActive()) {
-				m_batteryPowerTimer->stop();
-			}
-			//disable forcecharge
+			// do not stop timer, disable wil be sent continuously
+			//disable forcecharge once
+			remoteFunctionName = "disableRemoteControl";
+			result = disableRemoteControl(info->thing());
 		}
 
 		info->thing()->setStateValue(batteryEnableForcePowerStateTypeId, enableToggle);
 
-		info->finish(Thing::ThingErrorNoError);
 	} else if (info->action().actionTypeId() == batteryForcePowerTimeoutActionTypeId) {
-		batteryTimeout = info->action().paramValue(batteryForcePowerTimeoutActionForcePowerTimeoutParamTypeId).toInt();
+		int batteryTimeout = info->action().paramValue(batteryForcePowerTimeoutActionForcePowerTimeoutParamTypeId).toInt();
+		bool enableToggle = info->thing()->stateValue(batteryEnableForcePowerStateTypeId).toBool();
+
+		if (enableToggle) {
+			remoteFunctionName = "setBatteryPower";
+			result = setBatteryPower(info->thing(), UNSET_INT, batteryTimeout);
+			//restart timer with new timeout
+			if (m_batteryPowerTimer->isActive()) {
+				m_batteryPowerTimer->stop();
+				m_batteryPowerTimer->start((batteryTimeout/2)*1000);
+			} else {
+				m_batteryPowerTimer->start((batteryTimeout/2)*1000);
+			}
+		}
+
 		info->thing()->setStateValue(batteryForcePowerTimeoutStateTypeId, batteryTimeout);
-		info->finish(Thing::ThingErrorNoError);
+
 	} else if (info->action().actionTypeId() == batteryForcePowerActionTypeId) {
-		batteryPower = info->action().paramValue(batteryForcePowerActionForcePowerParamTypeId).toInt();
+		int batteryPower = info->action().paramValue(batteryForcePowerActionForcePowerParamTypeId).toInt();
+		bool enableToggle = info->thing()->stateValue(batteryEnableForcePowerStateTypeId).toBool();
+
+		if (enableToggle) {
+			remoteFunctionName = "setBatteryPower";
+			result = setBatteryPower(info->thing(), batteryPower);
+		}
+
 		info->thing()->setStateValue(batteryForcePowerStateTypeId, batteryPower);
-		info->finish(Thing::ThingErrorNoError);
+
 	}
     
+	if (result.get("state", "failed").asString() == "successful") {
+		info->finish(Thing::ThingErrorNoError);
+	} else {
+		QString errMes = "none";
+		if (remoteFunctionName == "setBatteryPower") {
+			errMes = QString::fromStdString(remoteFunctionName + " failed.");
+		} else {
+			errMes = QString::fromStdString(remoteFunctionName + " failed: " + result.get("reason","unknown").asString());
+		}
+		
+		info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP(errMes));
+	}
 }
 
 void IntegrationPluginGenericConsolinno::thingRemoved(Thing *thing)
@@ -365,3 +405,72 @@ void IntegrationPluginGenericConsolinno::thingRemoved(Thing *thing)
 
 }
 
+
+Json::Value IntegrationPluginGenericConsolinno::setBatteryPower(Thing* thing, int power, int timeout) {	
+	Json::Value result;
+	if (thing->thingClassId() == batteryThingClassId) {
+		if (power == UNSET_INT) {
+			power = thing->stateValue(batteryForcePowerStateTypeId).toInt();
+		}
+		if (timeout == UNSET_INT) {
+			timeout = thing->stateValue(batteryForcePowerTimeoutStateTypeId).toInt();
+		}
+
+		Thing *parentThing = myThings().findById(thing->parentId());
+		QString connectionParams = parentThing->paramValue(genericConsolinnoConnectionThingConnectionParamsParamTypeId).toString();
+		//Jsonrpc request to set limit
+		HttpClient client(urlModbusRTU);
+		Client c(client);
+		Json::Value params;
+		params["connectionParams"] = connectionParams.toStdString();
+		params["power"] = power;
+		params["timeout"] = timeout;
+
+		
+		//QString errMes = "exception";
+		try {
+			std::cout << "setBatteryPower sent, power: " << power << ", timeout: " << timeout << std::endl;
+			result["reason"] = c.CallMethod("setBatteryPower", params);
+			result["state"] = "successful";
+		} catch (JsonRpcException &e) {
+			//std::cerr << e.what() << std::endl;
+			//errMes = QString::fromStdString("setBatteryPower failed: " + std::string(e.what()));
+			result["state"] = "failed";
+			result["reason"] = "setBatteryPower failed";// + std::string(e.what());
+		}
+	} else {
+		result["state"] = "failed";
+		result["reason"] = "thing does not support setBatteryPower";
+	}
+	return result;
+}
+
+Json::Value IntegrationPluginGenericConsolinno::disableRemoteControl(Thing *thing) {
+	Json::Value result;
+	if (thing->thingClassId() == batteryThingClassId) {
+
+		Thing *parentThing = myThings().findById(thing->parentId());
+		QString connectionParams = parentThing->paramValue(genericConsolinnoConnectionThingConnectionParamsParamTypeId).toString();
+		//Jsonrpc request to set limit
+		HttpClient client(urlModbusRTU);
+		Client c(client);
+		Json::Value params;
+		params["connectionParams"] = connectionParams.toStdString();
+		
+		//std::string errMes = "exception";
+		try {
+			std::cout << "disableRemoteControl sent" << std::endl;
+			result["reason"] = c.CallMethod("disableRemoteControl", params);
+			result["state"] = "successful";
+		} catch (JsonRpcException &e) {
+			// std::cerr << e.what() << std::endl;
+			//errMes = "disableRemoteControl failed: " + std::string(e.what());
+			result["state"] = "failed";
+			result["reason"] = "disableRemoteControl failed: " + std::string(e.what());
+		}
+	} else {
+		result["state"] = "failed";
+		result["reason"] = "thing does not support setBatteryPower";
+	}
+	return result;
+}

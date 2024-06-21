@@ -527,6 +527,14 @@
                             "writable": true
                         },
                         {
+                            "id": "fbfe45b1-04da-4118-818e-35beb401bd08",
+                            "name": "enableForcePowerState",
+                            "displayName": "Battery manual mode enabled",
+                            "displayNameEvent": "Battery manual mode state changed",
+                            "type": "bool",
+                            "defaultValue": false
+                        },
+                        {
                             "id": "d1d9181a-7f2d-4322-a859-067f8e2d518f",
                             "name": "forcePower",
                             "displayName": "Battery force power (+:charge, -:discharge)",
@@ -536,7 +544,7 @@
                             "unit": "Watt",
                             "defaultValue": 0.0,
                             "writable": true,
-                            "cached":true
+                            "cached": true
                         },
                         {
                             "id": "79e72b03-bd5f-45a9-91bc-e84cc25162f2",
@@ -548,7 +556,17 @@
                             "unit": "Seconds",
                             "defaultValue": 500,
                             "writable": true,
-                            "cached":true
+                            "cached": true
+                        },
+                        {
+                            "id": "494243fc-1898-4bfd-add8-550d5c30933b",
+                            "name": "forcePowerTimeoutCountdown",
+                            "displayName": "Timeout countdown",
+                            "displayNameEvent": "timeout countdown changed",
+                            "type": "int",
+                            "unit": "Seconds",
+                            "defaultValue": 500,
+                            "cached": true
                         }
                     ]
                 }
