@@ -79,6 +79,10 @@ void IntegrationPluginGenericConsolinno::discoverThings(ThingDiscoveryInfo *info
 		params["identifier"] = "";
 		params["discoveredIpAddresses"] = discoveredIpAddresses;
 
+		//Json::StreamWriterBuilder writer;
+		//std::string output = Json::writeString(writer, params);
+		//std::cout << output << std::endl;
+
 		try {
 			//Save c.CallMethod("discoverAllDevices", params); responce to json object
 			Json::Value result = c.CallMethod("discoverAllDevices", params);
@@ -182,7 +186,17 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 							if(batteryThings.first()->hasState(stateName)){
 								batteryThings.first()->setStateValue(stateName, block[key].asFloat());
 								//qCDebug(dcGenericConsolinno()) << "bat name" << stateName << "block[key].asFloat():" << block[key].asFloat();
-								// TODO: start battery timer if remote control is active and battery timer is not started yet
+
+								// start battery timer if remote control is active and battery timer is not started yet
+								if (stateName == "enableForcePowerState" && m_batteryPowerTimer) {
+									bool enableToggle = batteryThings.first()->stateValue(batteryEnableForcePowerStateTypeId).toBool();
+									int timeout = batteryThings.first()->stateValue(batteryForcePowerTimeoutStateTypeId).toInt();
+									if (enableToggle && stateValue.toBool()) {
+										if (!m_batteryPowerTimer->isActive()) {
+											m_batteryPowerTimer->start((timeout/2)*1000);
+										}
+									}
+								}
 							}
 							batteryDataFound = true;
 						}
@@ -323,16 +337,19 @@ void IntegrationPluginGenericConsolinno::executeAction(ThingActionInfo *info)
 	} else if (info->action().actionTypeId() == batteryEnableForcePowerActionTypeId) {
 		
 		bool enableToggle = info->action().paramValue(batteryEnableForcePowerActionEnableForcePowerParamTypeId).toBool();
+		int batteryTimeout = info->thing()->stateValue(batteryForcePowerTimeoutStateTypeId).toInt();
 
 		std::cout << "mode changed:" << enableToggle << std::endl;
 
 		if (enableToggle) {
-			// timer is not restart on every toggle change, but sent continuosly
+			// timer is not restart on every toggle change, but sent continuosly, start counter if not started yet
+			if (!m_batteryPowerTimer->isActive()) {
+				m_batteryPowerTimer->start((batteryTimeout/2)*1000);
+			}
 			//but trigger sent once:
 			remoteFunctionName = "setBatteryPower";
 			result = setBatteryPower(info->thing());
 		} else {
-			// do not stop timer, disable wil be sent continuously
 			//disable forcecharge once
 			remoteFunctionName = "disableRemoteControl";
 			result = disableRemoteControl(info->thing());
@@ -415,6 +432,8 @@ Json::Value IntegrationPluginGenericConsolinno::setBatteryPower(Thing* thing, in
 		if (timeout == UNSET_INT) {
 			timeout = thing->stateValue(batteryForcePowerTimeoutStateTypeId).toInt();
 		}
+		int nominalPower = thing->stateValue(batteryNominalPowerBatteryStateTypeId).toInt();
+		
 
 		Thing *parentThing = myThings().findById(thing->parentId());
 		QString connectionParams = parentThing->paramValue(genericConsolinnoConnectionThingConnectionParamsParamTypeId).toString();
@@ -425,7 +444,7 @@ Json::Value IntegrationPluginGenericConsolinno::setBatteryPower(Thing* thing, in
 		params["connectionParams"] = connectionParams.toStdString();
 		params["power"] = power;
 		params["timeout"] = timeout;
-
+		params["nominalPower"] = nominalPower;
 		
 		//QString errMes = "exception";
 		try {
