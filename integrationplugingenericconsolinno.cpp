@@ -187,6 +187,22 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 								batteryThings.first()->setStateValue(stateName, block[key].asFloat());
 								//qCDebug(dcGenericConsolinno()) << "bat name" << stateName << "block[key].asFloat():" << block[key].asFloat();
 
+								if (stateName == "forcePowerTimeout" && m_batteryPowerTimer) {
+									int timeoutState = batteryThings.first()->stateValue(batteryForcePowerTimeoutStateTypeId).toInt() / 2 * 1000;
+									if (timeoutState != m_batteryPowerTimer->interval()) {
+										if (m_batteryPowerTimer->isActive()){
+											m_batteryPowerTimer->stop();
+											m_batteryPowerTimer->start(timeoutState);
+										} else {
+											m_batteryPowerTimer->start(timeoutState);
+										}
+										cout << "battery timer started with interval " << m_batteryPowerTimer->interval()/1000 << " seconds (state value: " << timeoutState << ")" << endl;
+									}
+
+								}
+								
+								/*
+								// instead sync the batteryTimer with the timeout field if nto the same
 								// start battery timer if remote control is active and battery timer is not started yet
 								if (stateName == "enableForcePowerState" && m_batteryPowerTimer) {
 									bool enableToggle = batteryThings.first()->stateValue(batteryEnableForcePowerStateTypeId).toBool();
@@ -194,9 +210,10 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 									if (enableToggle && stateValue.toBool()) {
 										if (!m_batteryPowerTimer->isActive()) {
 											m_batteryPowerTimer->start((timeout/2)*1000);
+
 										}
 									}
-								}
+								}*/
 							}
 							batteryDataFound = true;
 						}
@@ -272,6 +289,8 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 		int timeout = thing->stateValue(batteryForcePowerTimeoutStateTypeId).toInt();
 		// send command not every timeout seconds, but half of it (FoxESS sometimes counts significantly faster than reality, 60s in reality is ~30s for FoxESS)
 		m_batteryPowerTimer->start(timeout/2*1000);
+		cout << "battery timer started with interval " << m_batteryPowerTimer->interval()/1000 << " seconds" << endl;
+
 
         Thing *parentThing = myThings().findById(thing->parentId());
         if (parentThing) {
@@ -345,6 +364,7 @@ void IntegrationPluginGenericConsolinno::executeAction(ThingActionInfo *info)
 			// timer is not restart on every toggle change, but sent continuosly, start counter if not started yet
 			if (!m_batteryPowerTimer->isActive()) {
 				m_batteryPowerTimer->start((batteryTimeout/2)*1000);
+				cout << "battery timer started with interval " << m_batteryPowerTimer->interval()/1000 << " seconds" << endl;
 			}
 			//but trigger sent once:
 			remoteFunctionName = "setBatteryPower";
@@ -368,8 +388,10 @@ void IntegrationPluginGenericConsolinno::executeAction(ThingActionInfo *info)
 			if (m_batteryPowerTimer->isActive()) {
 				m_batteryPowerTimer->stop();
 				m_batteryPowerTimer->start((batteryTimeout/2)*1000);
+				cout << "battery timer started with interval " << m_batteryPowerTimer->interval()/1000 << " seconds" << endl;
 			} else {
 				m_batteryPowerTimer->start((batteryTimeout/2)*1000);
+				cout << "battery timer started with interval " << m_batteryPowerTimer->interval()/1000 << " seconds" << endl;
 			}
 		}
 
