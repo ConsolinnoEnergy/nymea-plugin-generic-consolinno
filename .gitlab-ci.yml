@@ -1,26 +1,4 @@
-build:debian-bullseye:amd64:prod:
-  rules:
-    - when: never
-build:debian-bullseye:armhf:prod:
-  rules:
-    - when: never
-
 include:
   - project: 'leafletfirmware/nymea/nymea-ci'
     file: '/nymea/pipeline.yml'
     ref: main
-
-upload:prod:
-  script:
-    #- curl --header "PRIVATE-TOKEN:${START_UPTERM}" "https://gitlab.consolinno-it.de/api/v4/projects/775/repository/files/upterm_tmux.sh/raw?ref=master" > /tmp/upterm.sh && chmod +x /tmp/upterm.sh && /tmp/upterm.sh
-    - ls -1 $CI_PROJECT_DIR/buster-armhf/*.deb | xargs /debupload.sh buster $COMPONENT   
-    - ls -1 $CI_PROJECT_DIR/buster-amd64/*.deb | xargs /debupload.sh buster $COMPONENT
-    # - ls -1 $CI_PROJECT_DIR/bullseye-armhf/*.deb | xargs /debupload.sh bullseye $COMPONENT
-    # - ls -1 $CI_PROJECT_DIR/bullseye-amd64/*.deb | xargs /debupload.sh bullseye $COMPONENT
-    - ls -1 $CI_PROJECT_DIR/focal-amd64/*.deb | xargs /debupload.sh focal $COMPONENT
-    #- ls -1 $CI_PROJECT_DIR/jammy-amd64/*.deb | xargs /debupload.sh jammy $COMPONENT
-  dependencies:
-    - build:debian-buster:armhf:prod
-    - build:debian-buster:amd64:prod
-    - build:ubuntu-focal:amd64:prod
-    # - build:ubuntu-jammy:amd64:prod
