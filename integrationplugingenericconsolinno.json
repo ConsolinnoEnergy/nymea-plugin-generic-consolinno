@@ -31,6 +31,14 @@
                             "displayName": "Connection parameters",
                             "type": "QString",
                             "defaultValue": ""
+                        },
+                        {
+                            "id": "39d7913e-a19e-40e4-8c80-5a25e14e402b",
+                            "name": "nominalPower",
+                            "displayName": "Inverter Nominal power",
+                            "type": "int",
+                            "unit": "Watt",
+                            "defaultValue": 10000
                         }
                     ],
                     "stateTypes": [
@@ -75,7 +83,7 @@
                                 {
                                     "id": "0f897ca3-a942-4d93-bad9-0fa62037d529",
                                     "name": "nominalPower",
-                                    "displayName": "Inverter Nominal power (watt)",
+                                    "displayName": "Inverter Nominal power",
                                     "type": "int",
                                     "unit": "Watt",
                                     "defaultValue": 10000
@@ -83,16 +91,7 @@
                             ]
                         }
                     ],
-                    "paramTypes": [
-                        {
-                            "id": "39d7913e-a19e-40e4-8c80-5a25e14e402b",
-                            "name": "nominalPower",
-                            "displayName": "Inverter Nominal power (watt)",
-                            "type": "int",
-                            "unit": "Watt",
-                            "defaultValue": 10000
-                        }
-                    ],
+                    "paramTypes": [],
                     "stateTypes": [
                         {
                             "id": "c53d368e-c0c9-4b76-8e7d-6b4d0d690721",
@@ -459,16 +458,7 @@
                             "defaultValue": 0
                         }
                     ],
-                    "paramTypes": [
-                        {
-                            "id": "6a2dfc09-0813-4aad-9bcd-0a7bac3fee5d",
-                            "name": "nominalPowerBattery",
-                            "displayName": "Battery Nominal power (watt)",
-                            "type": "int",
-                            "unit": "Watt",
-                            "defaultValue": 2500
-                        }
-                    ],
+                    "paramTypes": [],
                     "stateTypes": [
                         {
                             "id": "d3691be0-b8c1-4731-8c1a-b8ebb221385d",
@@ -497,6 +487,20 @@
                             "minValue": 0,
                             "maxValue": 100,
                             "defaultValue": 0
+                        },
+                        {
+                            "id": "151ba294-a5e3-42e8-8e84-ea1c3596bcd6",
+                            "name": "minBatteryLevel",
+                            "displayName": "min. Battery level",
+                            "displayNameEvent": "min Battery level changed",
+                            "displayNameAction": "min Battery level set",
+                            "type": "int",
+                            "unit": "Percentage",
+                            "minValue": 5,
+                            "maxValue": 100,
+                            "defaultValue": 5,
+                            "writable": true,
+                            "cached": true
                         },
                         {
                             "id": "e820efab-8a46-4c48-a14f-95964cb44f11",
@@ -537,7 +541,7 @@
                         {
                             "id": "8a2e2f44-53bd-411c-9b0a-bded423da0df",
                             "name": "nominalPowerBattery",
-                            "displayName": "Nominal Power Battery",
+                            "displayName": "Nominal Power for control",
                             "displayNameEvent": "Nominal power changed",
                             "type": "double",
                             "unit": "Watt",

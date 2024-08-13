@@ -70,6 +70,7 @@ private:
     static const int UNSET_INT = std::numeric_limits<int>::min();
     Json::Value setBatteryPower(Thing* thing, int power = UNSET_INT, int timeout = UNSET_INT);
     Json::Value disableRemoteControl(Thing *thing);
+    Json::Value setModbusValue(Thing* thing, string name, int value);
 
 };
 
