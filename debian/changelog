@@ -1,10 +1,17 @@
-nymea-plugin-generic-consolinno (1.0.2) UNRELEASED; urgency=medium
+nymea-plugin-generic-consolinno (1.0.3) UNRELEASED; urgency=medium
 
   * add battery control and read/write min SOC, tested with FoxESS H3-Pro and SAJ
 
  -- Cornelius Kast <cornelius.kast@enqs.de>  Wed, 14 Aug 2024 16:45:22 +0200
 
-nymea-plugin-generic-consolinno (1.0.1) RELEASED; urgency=medium
+nymea-plugin-generic-consolinno (1.0.2) RELEASED; urgency=medium
+
+* Show supported devices as sepearte entries
+* Integrations are automatically generated
+
+ -- Luis Reber <l.reber@consolinno.de>  Mon, 22 Jul 2024 14:01:37 +0200
+
+nymea-plugin-generic-consolinno (1.0.1-1) RELEASED; urgency=medium
 
   * Initial release.
 
