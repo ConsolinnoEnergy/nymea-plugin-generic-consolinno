@@ -21,7 +21,7 @@
 #define INTEGRATIONPLUGINGENERICCONSOLINNO_H
 
 #include <QObject>
-
+#include <QTimer>
 #include <integrations/integrationplugin.h>
 #include <QString>
 class PluginTimer;
@@ -57,7 +57,7 @@ public:
     void thingRemoved(Thing *thing) override;
 
 private:
-	PluginTimer *m_timer = nullptr;
+    PluginTimer *m_timer = nullptr;
     // PluginTimer *m_timer2 = nullptr;  // apparently the plugin does not work with 2 PluginTimers
     QTcpSocket *m_sockets;
 
