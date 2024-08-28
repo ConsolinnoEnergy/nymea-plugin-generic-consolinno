@@ -1,0 +1,34 @@
+{
+  "SAJ": {
+    "H2": {
+      "filename": "sajh2",
+      "interfaces": "null",
+      "uuid_offset": 1
+    }
+  },
+  "FoxESS": {
+    "H3-Pro": {
+      "filename": "foxh3pro",
+      "interfaces": "null",
+      "uuid_offset": 3
+    },
+    "H3": {
+      "filename": "foxh3",
+      "interfaces": "null",
+      "uuid_offset": 5
+    },
+    "AIO-H3": {
+      "filename": "foxaioh3",
+      "interfaces": "null",
+      "uuid_offset": 7
+    }
+  },
+  "a-TroniX": {
+    "AX": {
+      "filename": "atronixax",
+      "interfaces": "null",
+      "uuid_offset": 11
+    }
+  }
+}
+

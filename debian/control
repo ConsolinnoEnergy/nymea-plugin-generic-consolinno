@@ -1,7 +1,7 @@
 Source: nymea-plugin-generic-consolinno
 Section: utils
 Priority: options
-Maintainer: Consolinno Energy GmbH <office@consolinno.de>
+Maintainer: Consolinno Energy GmbH <info@consolinno.de>
 Build-depends: debhelper (>= 9.0.0),
                libnymea-dev,
                nymea-dev-tools:native,
@@ -11,7 +11,7 @@ Build-depends: debhelper (>= 9.0.0),
                libcurl4-openssl-dev
 Standards-Version: 3.9.3
 
-Package: nymea-plugin-generic-consolinno
+Package: nymea-plugin-genericconsolinno
 Architecture: any
 Multi-Arch: same
 Section: libs
