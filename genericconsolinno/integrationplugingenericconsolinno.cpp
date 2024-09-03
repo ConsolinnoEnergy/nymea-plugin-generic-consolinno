@@ -298,15 +298,15 @@ void IntegrationPluginGenericConsolinno::postSetupThing(Thing *thing)
         // Check if w have to set up a child meter/inverter/battery for this inverter connection
         if (myThings().filterByParentId(thing->id()).filterByThingClassId(meterThingClassId).isEmpty()) {
             qCDebug(dcGenericConsolinno()) << "Setup new meter for" << thing;
-            emit autoThingsAppeared(ThingDescriptors() << ThingDescriptor(meterThingClassId, thing->name() + " meter", QString(), thing->id()));
+            emit autoThingsAppeared(ThingDescriptors() << ThingDescriptor(meterThingClassId, thing->name() + QT_TR_NOOP(" meter"), QString(), thing->id()));
         }
 		if (myThings().filterByParentId(thing->id()).filterByThingClassId(inverterThingClassId).isEmpty()) {
             qCDebug(dcGenericConsolinno()) << "Setup new inverter for" << thing;
-            emit autoThingsAppeared(ThingDescriptors() << ThingDescriptor(inverterThingClassId, thing->name() + " inverter", QString(), thing->id()));
+            emit autoThingsAppeared(ThingDescriptors() << ThingDescriptor(inverterThingClassId, thing->name() + QT_TR_NOOP(" inverter"), QString(), thing->id()));
         }
 		if (myThings().filterByParentId(thing->id()).filterByThingClassId(batteryThingClassId).isEmpty()) {
             qCDebug(dcGenericConsolinno()) << "Setup new battery for" << thing;
-            emit autoThingsAppeared(ThingDescriptors() << ThingDescriptor(batteryThingClassId, thing->name() + " battery", QString(), thing->id()));
+            emit autoThingsAppeared(ThingDescriptors() << ThingDescriptor(batteryThingClassId, thing->name() + QT_TR_NOOP(" battery"), QString(), thing->id()));
         }
     }
 }
