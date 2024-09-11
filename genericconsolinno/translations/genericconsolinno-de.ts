@@ -251,7 +251,7 @@ The name of the StateType ({4d76d895-5fdc-45ad-a7b1-ee9aff5997bd}) of ThingClass
         <extracomment>The name of the ParamType (ThingClass: battery, ActionType: forcePower, ID: {d1d9181a-7f2d-4322-a859-067f8e2d518f})
 ----------
 The name of the StateType ({d1d9181a-7f2d-4322-a859-067f8e2d518f}) of ThingClass battery</extracomment>
-        <translation>Forciere Laden (+) oder Entladen (-)</translation>
+        <translation>Lade- (+) bzw. Entladeleistung (-)</translation>
     </message>
     <message>
         <source>Battery force power enabled</source>
@@ -263,12 +263,12 @@ The name of the StateType ({d1d9181a-7f2d-4322-a859-067f8e2d518f}) of ThingClass
         <extracomment>The name of the ParamType (ThingClass: battery, ActionType: forcePowerTimeout, ID: {79e72b03-bd5f-45a9-91bc-e84cc25162f2})
 ----------
 The name of the StateType ({79e72b03-bd5f-45a9-91bc-e84cc25162f2}) of ThingClass battery</extracomment>
-        <translation>Zeit für forcierte Batterie Leistung</translation>
+        <translation>Dauer der forcierten Batterie Leistung</translation>
     </message>
     <message>
         <source>Battery force power timeout enabled</source>
         <extracomment>The name of the ActionType ({79e72b03-bd5f-45a9-91bc-e84cc25162f2}) of ThingClass battery</extracomment>
-        <translation>Zeit für forcierte Batterie Leistung aktiviert</translation>
+        <translation>Auszeit für Batterie Leistung aktiviert</translation>
     </message>
     <message>
         <source>Battery manual mode</source>
