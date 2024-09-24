@@ -122,7 +122,7 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 {
     Thing *thing = info->thing();
     qCDebug(dcGenericConsolinno()) << "Setup" << thing << thing->params();
-	m_timer = hardwareManager()->pluginTimerManager()->registerTimer(5);
+	m_timer = hardwareManager()->pluginTimerManager()->registerTimer(7);
 
     if (thing->thingClassId() == genericConsolinnoConnectionThingClassId) {
 
