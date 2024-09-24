@@ -29,6 +29,13 @@
       "interfaces": "null",
       "uuid_offset": 11
     }
+  },
+  "QCells": {
+    "Gen4": {
+      "filename": "qcellsg4",
+      "interfaces": "null",
+      "uuid_offset": 13
+    }
   }
 }
 

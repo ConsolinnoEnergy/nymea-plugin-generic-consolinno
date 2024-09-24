@@ -2,6 +2,21 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="de_DE">
 <context>
+    <name>IntegrationPluginGenericConsolinno</name>
+    <message>
+        <source> meter</source>
+        <translation> Stromzähler</translation>
+    </message>
+    <message>
+        <source> inverter</source>
+        <translation> Wechselrichter</translation>
+    </message>
+    <message>
+        <source> battery</source>
+        <translation> Batterie</translation>
+    </message>
+</context>
+<context>
     <name>genericConsolinno</name>
     <message>
         <source>Battery capacity kWh</source>
@@ -125,11 +140,6 @@ The name of the plugin genericConsolinno ({7567e677-9586-42f8-af1f-050d5953edcc}
         <translation>Momentane Leistung</translation>
     </message>
     <message>
-        <source>Inverter Nominal power (watt)</source>
-        <extracomment>The name of the ParamType (ThingClass: inverter, ActionType: setExportLimit, ID: {0f897ca3-a942-4d93-bad9-0fa62037d529})</extracomment>
-        <translation>Wechselrichter Nennleistung</translation>
-    </message>
-    <message>
         <source>Nominal Power AC</source>
         <extracomment>The name of the StateType ({93fa06ff-dc56-4064-a055-2e2ca5eaba9f}) of ThingClass inverter</extracomment>
         <translation>Nennleistung AC</translation>
@@ -235,6 +245,73 @@ The name of the StateType ({4d76d895-5fdc-45ad-a7b1-ee9aff5997bd}) of ThingClass
         <source>actual PV power limit</source>
         <extracomment>The name of the StateType ({d12c9da6-e6c3-4522-9d41-372739778f7f}) of ThingClass inverter</extracomment>
         <translation>Tatsächliche PV Leistungsgrenze</translation>
+    </message>
+    <message>
+        <source>Battery force power (+:charge, -:discharge)</source>
+        <extracomment>The name of the ParamType (ThingClass: battery, ActionType: forcePower, ID: {d1d9181a-7f2d-4322-a859-067f8e2d518f})
+----------
+The name of the StateType ({d1d9181a-7f2d-4322-a859-067f8e2d518f}) of ThingClass battery</extracomment>
+        <translation>Lade- (+) bzw. Entladeleistung (-)</translation>
+    </message>
+    <message>
+        <source>Battery force power enabled</source>
+        <extracomment>The name of the ActionType ({d1d9181a-7f2d-4322-a859-067f8e2d518f}) of ThingClass battery</extracomment>
+        <translation>Forcierte Batterie Leistung aktiviert</translation>
+    </message>
+    <message>
+        <source>Battery force power timeout</source>
+        <extracomment>The name of the ParamType (ThingClass: battery, ActionType: forcePowerTimeout, ID: {79e72b03-bd5f-45a9-91bc-e84cc25162f2})
+----------
+The name of the StateType ({79e72b03-bd5f-45a9-91bc-e84cc25162f2}) of ThingClass battery</extracomment>
+        <translation>Dauer der forcierten Batterie Leistung</translation>
+    </message>
+    <message>
+        <source>Battery force power timeout enabled</source>
+        <extracomment>The name of the ActionType ({79e72b03-bd5f-45a9-91bc-e84cc25162f2}) of ThingClass battery</extracomment>
+        <translation>Auszeit für Batterie Leistung aktiviert</translation>
+    </message>
+    <message>
+        <source>Battery manual mode</source>
+        <extracomment>The name of the ParamType (ThingClass: battery, ActionType: enableForcePower, ID: {932c7e73-6ab1-4b2b-98a4-7353ad1508c2})
+----------
+The name of the StateType ({932c7e73-6ab1-4b2b-98a4-7353ad1508c2}) of ThingClass battery</extracomment>
+        <translation>Manueller Modus</translation>
+    </message>
+    <message>
+        <source>Battery manual mode enabled</source>
+        <extracomment>The name of the ActionType ({932c7e73-6ab1-4b2b-98a4-7353ad1508c2}) of ThingClass battery
+----------
+The name of the StateType ({fbfe45b1-04da-4118-818e-35beb401bd08}) of ThingClass battery</extracomment>
+        <translation>Manueller Modus aktiviert</translation>
+    </message>
+    <message>
+        <source>Inverter Nominal power</source>
+        <extracomment>The name of the ParamType (ThingClass: inverter, ActionType: setExportLimit, ID: {0f897ca3-a942-4d93-bad9-0fa62037d529})
+----------
+The name of the ParamType (ThingClass: genericConsolinnoConnection, Type: thing, ID: {39d7913e-a19e-40e4-8c80-5a25e14e402b})</extracomment>
+        <translation>Wechselrichter Nennleistung</translation>
+    </message>
+    <message>
+        <source>Nominal Power for control</source>
+        <extracomment>The name of the StateType ({8a2e2f44-53bd-411c-9b0a-bded423da0df}) of ThingClass battery</extracomment>
+        <translation>Nennleistung für die Steuerung</translation>
+    </message>
+    <message>
+        <source>Timeout countdown</source>
+        <extracomment>The name of the StateType ({494243fc-1898-4bfd-add8-550d5c30933b}) of ThingClass battery</extracomment>
+        <translation>Verbleibende Zeit</translation>
+    </message>
+    <message>
+        <source>min Battery level set</source>
+        <extracomment>The name of the ActionType ({151ba294-a5e3-42e8-8e84-ea1c3596bcd6}) of ThingClass battery</extracomment>
+        <translation>Setze minimalen Batteriestand</translation>
+    </message>
+    <message>
+        <source>min. Battery level</source>
+        <extracomment>The name of the ParamType (ThingClass: battery, ActionType: minBatteryLevel, ID: {151ba294-a5e3-42e8-8e84-ea1c3596bcd6})
+----------
+The name of the StateType ({151ba294-a5e3-42e8-8e84-ea1c3596bcd6}) of ThingClass battery</extracomment>
+        <translation>Minimale Ladung</translation>
     </message>
 </context>
 </TS>
