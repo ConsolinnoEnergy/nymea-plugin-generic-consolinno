@@ -30,7 +30,6 @@ class PluginTimer;
 #include <jsonrpccpp/client.h>
 #include <jsonrpccpp/client/connectors/httpclient.h>
 #include <jsoncpp/json/json.h>
-#include <limits>
 
 using namespace jsonrpc;
 using namespace std;
@@ -61,16 +60,7 @@ private:
     // PluginTimer *m_timer2 = nullptr;  // apparently the plugin does not work with 2 PluginTimers
     QTcpSocket *m_sockets;
 
-    QTimer *m_batteryPowerTimer = nullptr;
-    //int batteryPower = 0;
-    //uint batteryTimeout = 0;
-
 	std::string urlModbusRTU= "http://127.0.0.1:8383";
-
-    static const int UNSET_INT = std::numeric_limits<int>::min();
-    Json::Value setBatteryPower(Thing* thing, int power = UNSET_INT, int timeout = UNSET_INT);
-    Json::Value disableRemoteControl(Thing *thing);
-    Json::Value setModbusValue(Thing* thing, string name, int value);
 
 };
 
