@@ -32,6 +32,7 @@
 #include <QtCore/qglobal.h>
 #include <QtCore/QRandomGenerator>
 #include <iostream>
+#include <limits>
 
 IntegrationPluginGenericConsolinno::IntegrationPluginGenericConsolinno()
 {
@@ -69,8 +70,8 @@ void IntegrationPluginGenericConsolinno::discoverThings(ThingDiscoveryInfo *info
 
 		HttpClient client(urlModbusRTU);
 		// Set the timeout for the curl command in msec.
-		// If the timeout is set to low, curl will timeout before all devices have been checked and nymea will report,
-		// that now devices have been found.
+		// If the timeout is set too low, curl will timeout before all devices have been checked and nymea will report,
+		// that no devices have been found.
 		client.SetTimeout(30000);
 		Client c(client);
 
@@ -78,11 +79,15 @@ void IntegrationPluginGenericConsolinno::discoverThings(ThingDiscoveryInfo *info
 		params["identifier"] = "";
 		params["discoveredIpAddresses"] = discoveredIpAddresses;
 
+		//Json::StreamWriterBuilder writer;
+		//std::string output = Json::writeString(writer, params);
+		//std::cout << output << std::endl;
+
 		try {
 			//Save c.CallMethod("discoverAllDevices", params); responce to json object
 			Json::Value result = c.CallMethod("discoverAllDevices", params);
 			//iterate on result
-			std::cout << result << result.size() << std::endl;
+			// std::cout << result << result.size() << std::endl;
 			for (Json::Value::ArrayIndex i = 0; i < result.size(); i++) {
 				//Debug out result[i]
 				// std::cout << "result[" << i << "]:" << result[i] << std::endl;
@@ -121,6 +126,7 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 
     if (thing->thingClassId() == genericConsolinnoConnectionThingClassId) {
 
+		// read out values
 		connect(m_timer, &PluginTimer::timeout, thing, [this, thing](){
 			QString connectionParams = thing->paramValue(genericConsolinnoConnectionThingConnectionParamsParamTypeId).toString();
 			// qCDebug(dcGenericConsolinno()) << "connectionParams:" << connectionParams;
@@ -180,6 +186,21 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
 							if(batteryThings.first()->hasState(stateName)){
 								batteryThings.first()->setStateValue(stateName, block[key].asFloat());
 								//qCDebug(dcGenericConsolinno()) << "bat name" << stateName << "block[key].asFloat():" << block[key].asFloat();
+
+								if (stateName == "forcePowerTimeout" && m_batteryPowerTimer) {
+									int timeoutState = batteryThings.first()->stateValue(batteryForcePowerTimeoutStateTypeId).toInt() / 2 * 1000;
+									if (timeoutState != m_batteryPowerTimer->interval()) {
+										if (m_batteryPowerTimer->isActive()){
+											m_batteryPowerTimer->stop();
+											m_batteryPowerTimer->start(timeoutState);
+										} else {
+											m_batteryPowerTimer->start(timeoutState);
+										}
+										qCDebug(dcGenericConsolinno()) << "battery timer started with interval " << m_batteryPowerTimer->interval()/1000 << " seconds (state value: " << timeoutState << ")";
+									}
+
+								}
+							
 							}
 							batteryDataFound = true;
 						}
@@ -214,6 +235,8 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
         Thing *parentThing = myThings().findById(thing->parentId());
         if (parentThing) {
             thing->setStateValue(inverterConnectedStateTypeId, parentThing->stateValue(genericConsolinnoConnectionConnectedStateTypeId).toBool());
+			// set nominal power inverter
+			thing->setStateValue(inverterNominalPowerStateTypeId, parentThing->paramValue(genericConsolinnoConnectionThingNominalPowerParamTypeId));
         }		
     } else if (thing->thingClassId() == meterThingClassId) {
         // Nothing to do here, we get all information from the inverter connection
@@ -223,13 +246,12 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
             thing->setStateValue(meterConnectedStateTypeId, parentThing->stateValue(genericConsolinnoConnectionConnectedStateTypeId).toBool());
         }		
     } else if (thing->thingClassId() == batteryThingClassId) {
-        // Nothing to do here, we get all information from the inverter connection
-        info->finish(Thing::ThingErrorNoError);
 
         // Set battery capacity from settings on restart.
         thing->setStateValue(batteryCapacityStateTypeId, thing->setting(batterySettingsCapacityParamTypeId).toUInt());
 
-        // Set battery capacity on settings change.
+
+	    // Set battery capacity on settings change.
         connect(thing, &Thing::settingChanged, this, [this, thing] (const ParamTypeId &paramTypeId, const QVariant &value) {
             if (paramTypeId == batterySettingsCapacityParamTypeId) {
                 qCDebug(dcGenericConsolinno()) << "Battery capacity changed to" << value.toInt() << "kWh";
@@ -237,10 +259,36 @@ void IntegrationPluginGenericConsolinno::setupThing(ThingSetupInfo *info)
             }
         });
 
+		// battery power timer
+		m_batteryPowerTimer = new QTimer(this);
+
+		// battery power set
+		connect(m_batteryPowerTimer, &QTimer::timeout, thing, [this, thing]() {
+			bool enable = thing->stateValue(batteryEnableForcePowerStateTypeId).toBool();
+
+			qCDebug(dcGenericConsolinno()) << "battery timer triggered";
+			if (enable) {
+				setBatteryPower(thing);
+			} else {
+				disableRemoteControl(thing);
+			}
+			
+		});
+
+		int timeout = thing->stateValue(batteryForcePowerTimeoutStateTypeId).toInt();
+		// send command not every timeout seconds, but half of it (FoxESS sometimes counts significantly faster than reality, 60s in reality is ~30s for FoxESS)
+		m_batteryPowerTimer->start(timeout/2*1000);
+		qCDebug(dcGenericConsolinno()) << "battery timer started with interval " << m_batteryPowerTimer->interval()/1000 << " seconds";
+
+
         Thing *parentThing = myThings().findById(thing->parentId());
         if (parentThing) {
             thing->setStateValue(batteryConnectedStateTypeId, parentThing->stateValue(genericConsolinnoConnectionConnectedStateTypeId).toBool());
+			// set nominal power inverter
+			thing->setStateValue(batteryNominalPowerBatteryStateTypeId, parentThing->paramValue(genericConsolinnoConnectionThingNominalPowerParamTypeId));
         }
+
+		info->finish(Thing::ThingErrorNoError);
     }
 }
 
@@ -265,8 +313,12 @@ void IntegrationPluginGenericConsolinno::postSetupThing(Thing *thing)
 
 void IntegrationPluginGenericConsolinno::executeAction(ThingActionInfo *info)
 {
+	Json::Value result;
+	std::string remoteFunctionName = "none";
+
 	if (info->action().actionTypeId() == inverterSetExportLimitActionTypeId) {
-		// params 
+		// params
+		remoteFunctionName = "setExportLimit";
 		int valuePercent = info->action().paramValue(inverterSetExportLimitActionExportLimitParamTypeId).toInt();
 		int nominalPowerWatt = info->action().paramValue(inverterSetExportLimitActionNominalPowerParamTypeId).toInt();
 
@@ -282,10 +334,9 @@ void IntegrationPluginGenericConsolinno::executeAction(ThingActionInfo *info)
 		params["value"] = valuePercent;
 		params["nominalPower"] = nominalPowerWatt;
 
-		Json::Value result;
 		QString errMes = "exception";
 		try {
-			result = c.CallMethod("setExportLimit", params);
+			result = c.CallMethod(remoteFunctionName, params);
 		} catch (JsonRpcException &e) {
 			// std::cerr << e.what() << std::endl;
 			// info->thing()->setStateValue(genericConsolinnoConnectionConnectedStateTypeId, false);
@@ -293,14 +344,88 @@ void IntegrationPluginGenericConsolinno::executeAction(ThingActionInfo *info)
 			info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP(errMes));
 		}
 
-		if (result.get("state", "failed").asString() == "successful") {
-			info->finish(Thing::ThingErrorNoError);
+	} else if (info->action().actionTypeId() == batteryEnableForcePowerActionTypeId) {
+		
+		bool enableToggle = info->action().paramValue(batteryEnableForcePowerActionEnableForcePowerParamTypeId).toBool();
+		int batteryTimeout = info->thing()->stateValue(batteryForcePowerTimeoutStateTypeId).toInt();
+
+		qCDebug(dcGenericConsolinno()) << "mode changed:" << enableToggle;
+
+		if (enableToggle) {
+			// timer is not restart on every toggle change, but sent continuosly, start counter if not started yet
+			if (!m_batteryPowerTimer->isActive()) {
+				m_batteryPowerTimer->start((batteryTimeout/2)*1000);
+				qCDebug(dcGenericConsolinno()) << "battery timer started with interval " << m_batteryPowerTimer->interval()/1000 << " seconds";
+			}
+			//but trigger sent once:
+			remoteFunctionName = "setBatteryPower";
+			result = setBatteryPower(info->thing());
 		} else {
-			errMes = "export limit failed: " + QString::fromStdString(result.get("reason","unknown").asString());
-			info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP(errMes));
+			//disable forcecharge once
+			remoteFunctionName = "disableRemoteControl";
+			result = disableRemoteControl(info->thing());
 		}
+
+		info->thing()->setStateValue(batteryEnableForcePowerStateTypeId, enableToggle);
+
+	} else if (info->action().actionTypeId() == batteryForcePowerTimeoutActionTypeId) {
+		int batteryTimeout = info->action().paramValue(batteryForcePowerTimeoutActionForcePowerTimeoutParamTypeId).toInt();
+		bool enableToggle = info->thing()->stateValue(batteryEnableForcePowerStateTypeId).toBool();
+
+		if (enableToggle) {
+			remoteFunctionName = "setBatteryPower";
+			result = setBatteryPower(info->thing(), UNSET_INT, batteryTimeout);
+			//restart timer with new timeout
+			if (m_batteryPowerTimer->isActive()) {
+				m_batteryPowerTimer->stop();
+				m_batteryPowerTimer->start((batteryTimeout/2)*1000);
+				qCDebug(dcGenericConsolinno()) << "battery timer started with interval " << m_batteryPowerTimer->interval()/1000 << " seconds";
+			} else {
+				m_batteryPowerTimer->start((batteryTimeout/2)*1000);
+				qCDebug(dcGenericConsolinno()) << "battery timer started with interval " << m_batteryPowerTimer->interval()/1000 << " seconds";
+			}
+		}
+
+		info->thing()->setStateValue(batteryForcePowerTimeoutStateTypeId, batteryTimeout);
+
+	} else if (info->action().actionTypeId() == batteryForcePowerActionTypeId) {
+		int batteryPower = info->action().paramValue(batteryForcePowerActionForcePowerParamTypeId).toInt();
+		bool enableToggle = info->thing()->stateValue(batteryEnableForcePowerStateTypeId).toBool();
+
+		if (enableToggle) {
+			remoteFunctionName = "setBatteryPower";
+			result = setBatteryPower(info->thing(), batteryPower);
+		}
+
+		info->thing()->setStateValue(batteryForcePowerStateTypeId, batteryPower);
+
+	} else if (info->action().actionTypeId() == batteryMinBatteryLevelActionTypeId) {
+		int value = info->action().paramValue(batteryMinBatteryLevelActionMinBatteryLevelParamTypeId).toInt();
+
+		result = setModbusValue(info->thing(), "minBatteryLevel", value);
+
+		if (result["state"] == "successful") {
+			if (result["reason"][0]["writingValue"]["state"] != "failed") {
+				info->thing()->setStateValue(batteryMinBatteryLevelStateTypeId, value);
+			} //else {
+				//info->thing()->setStateValue(batteryMinBatteryLevelStateTypeId, 5);
+			//}
+		}
+
 	}
     
+	if (result.get("state", "failed").asString() == "successful") {
+		info->finish(Thing::ThingErrorNoError);
+	} else {
+		QString errMes = "none";
+		if (remoteFunctionName == "setBatteryPower") {
+			errMes = QString::fromStdString(remoteFunctionName + " failed.");
+		} else {
+			errMes = QString::fromStdString(remoteFunctionName + " failed: " + result.get("reason","unknown").asString());
+		}
+		
+		info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP(errMes));
+	}
 }
 
 void IntegrationPluginGenericConsolinno::thingRemoved(Thing *thing)
@@ -316,6 +441,10 @@ void IntegrationPluginGenericConsolinno::thingRemoved(Thing *thing)
         m_timer = nullptr;
     }
 	
+	if (m_batteryPowerTimer && m_batteryPowerTimer->isActive()) {
+		m_batteryPowerTimer->stop();
+		m_batteryPowerTimer = nullptr;
+	}
 
 }
 
