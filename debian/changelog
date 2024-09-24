@@ -1,4 +1,4 @@
-nymea-plugin-generic-consolinno (1.0.3) UNRELEASED; urgency=medium
+nymea-plugin-generic-consolinno (1.0.3-1) UNRELEASED; urgency=medium
 
   * add battery control and read/write min SOC, tested with FoxESS H3-Pro and SAJ
 
