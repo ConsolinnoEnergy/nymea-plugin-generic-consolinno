@@ -1,6 +1,6 @@
 {
   "SAJ": {
-    "H2": {
+    "H/HS 2": {
       "filename": "sajh2",
       "interfaces": "null",
       "uuid_offset": 1
@@ -28,6 +28,13 @@
       "filename": "atronixax",
       "interfaces": "null",
       "uuid_offset": 11
+    }
+  },
+  "QCells": {
+    "Gen4": {
+      "filename": "qcellsg4",
+      "interfaces": "null",
+      "uuid_offset": 13
     }
   }
 }
