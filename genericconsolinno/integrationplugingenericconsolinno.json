@@ -22,7 +22,7 @@
                     "providedInterfaces": [
                         "solarinverter",
                         "energymeter",
-                        "energystorage"
+                        "controllablebattery"
                     ],
                     "paramTypes": [
                         {
@@ -444,7 +444,7 @@
                         "auto"
                     ],
                     "interfaces": [
-                        "energystorage",
+                        "controllablebattery",
                         "connectable"
                     ],
                     "settingsTypes": [
@@ -583,7 +583,7 @@
                             "displayName": "Battery force power timeout",
                             "displayNameEvent": "Battery force power timeout changed",
                             "displayNameAction": "Battery force power timeout enabled",
-                            "type": "int",
+                            "type": "uint",
                             "unit": "Seconds",
                             "defaultValue": 500,
                             "writable": true,
@@ -594,7 +594,7 @@
                             "name": "forcePowerTimeoutCountdown",
                             "displayName": "Timeout countdown",
                             "displayNameEvent": "timeout countdown changed",
-                            "type": "int",
+                            "type": "uint",
                             "unit": "Seconds",
                             "defaultValue": 500,
                             "cached": true
