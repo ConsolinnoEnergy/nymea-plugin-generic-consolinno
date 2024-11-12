@@ -1,12 +1,7 @@
-nymea-plugin-generic-consolinno (1.0.4) UNRELEASED; urgency=medium
-
-  * Add seperate entry for QCells Gen4
-
- -- Luis Reber <l.reber@consolinno.de>  Tue, 24 Sep 2025 10:56:22 +0200
-
 nymea-plugin-generic-consolinno (1.0.3-1) UNRELEASED; urgency=medium
 
   * add battery control and read/write min SOC, tested with FoxESS H3-Pro and SAJ
+  * Add seperate entry for QCells Gen4
 
  -- Cornelius Kast <cornelius.kast@enqs.de>  Wed, 14 Aug 2024 16:45:22 +0200
 
