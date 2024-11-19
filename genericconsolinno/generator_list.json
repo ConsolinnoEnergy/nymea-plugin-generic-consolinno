@@ -30,8 +30,8 @@
       "uuid_offset": 11
     }
   },
-  "QCells": {
-    "Gen4": {
+  "Qcells": {
+    "Q.HOME G4 (Pro)": {
       "filename": "qcellsg4",
       "interfaces": "null",
       "uuid_offset": 13
